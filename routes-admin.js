@@ -1142,15 +1142,28 @@ router.post('/bot-settings/telegram', checkAdminAuth, async (req, res) => {
 
 // Update WhatsApp Bot Settings
 router.post('/bot-settings/whatsapp', checkAdminAuth, async (req, res) => {
-    const { whatsapp_enabled } = req.body;
+    const { whatsapp_enabled, whatsapp_phone_number } = req.body;
     const db = getDB();
+    
+    // Sanitize phone number
+    let cleanNumber = null;
+    if (whatsapp_phone_number && whatsapp_phone_number.trim()) {
+        cleanNumber = whatsapp_phone_number.replace(/\D/g, ''); // Remove non-digits
+        if (cleanNumber.startsWith('0')) {
+            cleanNumber = '62' + cleanNumber.substring(1);
+        }
+        if (!cleanNumber.startsWith('62')) {
+            cleanNumber = '62' + cleanNumber;
+        }
+    }
     
     db.run(
         `UPDATE bot_settings 
          SET whatsapp_enabled = ?,
+             whatsapp_phone_number = ?,
              updated_at = CURRENT_TIMESTAMP 
          WHERE id = 1`,
-        [whatsapp_enabled === 'on' ? 1 : 0],
+        [whatsapp_enabled === 'on' ? 1 : 0, cleanNumber],
         function(err) {
             db.close();
             
