@@ -55,8 +55,19 @@
                             <i class="fab fa-whatsapp"></i>
                             WhatsApp (Opsional)
                         </label>
-                        <input type="tel" name="customer_whatsapp" class="form-input" placeholder="6281234567890">
-                        <p class="form-help">Format: 628xxxxxxxxxx (opsional)</p>
+                        <input type="tel" name="customer_whatsapp" class="form-input" placeholder="08123456789 atau 628123456789">
+                        <div class="alert alert-info" style="margin-top: 0.5rem; padding: 0.75rem; font-size: 0.875rem;">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Untuk mendapatkan notifikasi WhatsApp:</strong>
+                            <ol style="margin: 0.5rem 0 0 1.2rem; padding: 0;">
+                                <li>Simpan nomor bot: <strong><span id="botNumber">Loading...</span></strong></li>
+                                <li>Kirim pesan "Halo" ke bot WhatsApp kami</li>
+                                <li>Setelah checkout, notifikasi akan otomatis terkirim!</li>
+                            </ol>
+                            <p style="margin: 0.5rem 0 0 0; color: var(--text-muted); font-size: 0.8rem;">
+                                💡 Jika tidak chat ke bot, notifikasi hanya ke email saja
+                            </p>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -247,6 +258,24 @@
                 clearInterval(pollingInterval);
             }
         });
+    </script>
+<% } else { %>
+    <script>
+        // Load WhatsApp bot number from settings
+        fetch('/api/bot-info')
+            .then(response => response.json())
+            .then(data => {
+                const botNumberSpan = document.getElementById('botNumber');
+                if (data.whatsapp_phone_number) {
+                    botNumberSpan.textContent = data.whatsapp_phone_number;
+                } else {
+                    botNumberSpan.textContent = '(Bot belum dikonfigurasi)';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading bot info:', error);
+                document.getElementById('botNumber').textContent = '(Tidak tersedia)';
+            });
     </script>
 <% } %>
 
