@@ -1,0 +1,116 @@
+<%- include('../partials/admin-header') %>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
+            <p>Welcome back, <%= adminUser.username %>!</p>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-label">Active Products</div>
+                <h2 class="stat-value"><%= stats.products %></h2>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-label">Completed Orders</div>
+                <h2 class="stat-value"><%= stats.orders %></h2>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="stat-label">Total Revenue</div>
+                <h2 class="stat-value">Rp <%= stats.revenue.toLocaleString('id-ID') %></h2>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon orange">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-label">Pending Orders</div>
+                <h2 class="stat-value"><%= stats.pending %></h2>
+            </div>
+        </div>
+        
+        <!-- Recent Orders -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3><i class="fas fa-shopping-cart"></i> Recent Orders</h3>
+                <a href="/admin/orders" class="btn btn-secondary btn-sm">View All</a>
+            </div>
+            
+            <% if (recentOrders && recentOrders.length > 0) { %>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Product</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% recentOrders.forEach(order => { %>
+                            <tr>
+                                <td><strong><%= order.invoice_number %></strong></td>
+                                <td><%= order.product_name %></td>
+                                <td>Rp <%= order.total_amount.toLocaleString('id-ID') %></td>
+                                <td>
+                                    <span class="status-badge <%= order.status %>">
+                                        <% if (order.status === 'paid') { %>
+                                            <i class="fas fa-check"></i> Paid
+                                        <% } else { %>
+                                            <i class="fas fa-clock"></i> Pending
+                                        <% } %>
+                                    </span>
+                                </td>
+                                <td><%= formatDateWIB(order.created_at, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <p style="text-align: center; color: var(--text-muted); padding: 2rem;">No recent orders</p>
+            <% } %>
+        </div>
+        
+        <!-- Activity Logs -->
+        <% if (recentLogs && recentLogs.length > 0) { %>
+            <div class="card" style="margin-top: 2rem;">
+                <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                <div style="margin-top: 1rem;">
+                    <% recentLogs.forEach(log => { %>
+                        <div style="padding: 0.75rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong><%= log.username || 'System' %></strong>
+                                <span style="color: var(--text-muted);"> - <%= log.action %></span>
+                                <% if (log.description) { %>
+                                    <br><small style="color: var(--text-muted);"><%= log.description %></small>
+                                <% } %>
+                            </div>
+                            <small style="color: var(--text-muted);">
+                                <%= formatDateWIB(log.created_at, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) %>
+                            </small>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        <% } %>
+    </main>
+</div>
+
+</body>
+</html>

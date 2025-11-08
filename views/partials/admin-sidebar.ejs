@@ -1,0 +1,127 @@
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    🏪
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem;"><%= settings.store_name %></h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">Admin Panel</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="admin-nav">
+            <a href="/admin/dashboard" class="admin-nav-item <%= currentPage === 'dashboard' ? 'active' : '' %>">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            
+            <a href="/admin/products" class="admin-nav-item <%= currentPage === 'products' ? 'active' : '' %>">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </a>
+            
+            <a href="/admin/products/categories" class="admin-nav-item <%= currentPage === 'categories' ? 'active' : '' %>">
+                <i class="fas fa-tags"></i>
+                <span>Categories</span>
+            </a>
+            
+            <a href="/admin/orders" class="admin-nav-item <%= currentPage === 'orders' ? 'active' : '' %>">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            
+            <a href="/admin/blog/posts" class="admin-nav-item <%= currentPage === 'blog' ? 'active' : '' %>">
+                <i class="fas fa-blog"></i>
+                <span>Blog Posts</span>
+            </a>
+            
+            <a href="/admin/blog/categories" class="admin-nav-item <%= currentPage === 'blog-categories' ? 'active' : '' %>">
+                <i class="fas fa-folder"></i>
+                <span>Blog Categories</span>
+            </a>
+            
+            <a href="/admin/pages" class="admin-nav-item <%= currentPage === 'pages' ? 'active' : '' %>">
+                <i class="fas fa-file-alt"></i>
+                <span>Information Pages</span>
+            </a>
+            
+            <a href="/admin/faqs" class="admin-nav-item <%= currentPage === 'faqs' ? 'active' : '' %>">
+                <i class="fas fa-question-circle"></i>
+                <span>FAQs</span>
+            </a>
+            
+            <a href="/admin/expired-page" class="admin-nav-item <%= currentPage === 'expired-page' ? 'active' : '' %>">
+                <i class="fas fa-clock"></i>
+                <span>Expired Link Page</span>
+            </a>
+            
+            <div class="admin-nav-divider"></div>
+            
+            <a href="/admin/settings" class="admin-nav-item <%= currentPage === 'settings' ? 'active' : '' %>">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            
+            <a href="/admin/bot-settings" class="admin-nav-item <%= currentPage === 'bot-settings' ? 'active' : '' %>">
+                <i class="fas fa-robot"></i>
+                <span>Bot Settings</span>
+            </a>
+            
+            <a href="/admin/account" class="admin-nav-item <%= currentPage === 'account' ? 'active' : '' %>">
+                <i class="fas fa-user-circle"></i>
+                <span>Account</span>
+            </a>
+            
+            <div class="admin-nav-divider"></div>
+            
+            <a href="/" target="_blank" class="admin-nav-item">
+                <i class="fas fa-external-link-alt"></i>
+                <span>Visit Store</span>
+            </a>
+            
+            <a href="/admin/logout" class="admin-nav-item" style="color: var(--error);">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+        
+        <div class="admin-sidebar-footer">
+            <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); font-size: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                        <%= adminUser.username.charAt(0).toUpperCase() %>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;"><%= adminUser.username %></div>
+                        <div style="color: var(--text-muted);">Administrator</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleAdminSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <script>
+        function toggleAdminSidebar() {
+            document.querySelector('.admin-sidebar').classList.toggle('open');
+        }
+        
+        // Close sidebar on mobile when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.admin-sidebar');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(event.target) && 
+                !toggle.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+    </script>

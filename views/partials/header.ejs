@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- Mobile Web App Capable -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="<%= settings.store_name || 'RSA Store' %>">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#0f0f1e">
+    <meta name="msapplication-navbutton-color" content="#0f0f1e">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#0f0f1e">
+    
+    <title><%= typeof pageTitle !== 'undefined' ? pageTitle + ' - ' : '' %><%= settings.store_name || 'RSA Store' %></title>
+    
+    <meta name="description" content="<%= settings.store_description || 'Toko Digital Terpercaya' %>">
+    <meta name="keywords" content="toko online, produk digital, e-book, video course, akun premium">
+    <meta name="author" content="<%= settings.store_name %>">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="<%= settings.store_name %>">
+    <meta property="og:description" content="<%= settings.store_description %>">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="<%= settings.store_name %>">
+    <meta property="twitter:description" content="<%= settings.store_description %>">
+    
+    <!-- Favicon -->
+    <% if (settings.favicon_url) { %>
+        <link rel="icon" type="image/png" href="<%= settings.favicon_url %>">
+    <% } else { %>
+        <link rel="icon" type="image/png" href="/images/favicon.png">
+    <% } %>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="/css/main.css?v=<%= Date.now() %>">
+    
+    <!-- Responsive CSS (must be after main.css) -->
+    <link rel="stylesheet" href="/css/responsive.css?v=<%= Date.now() %>">
+    
+    <!-- Additional CSS for specific pages -->
+    <% if (typeof additionalCSS !== 'undefined' && additionalCSS) { %>
+        <% additionalCSS.forEach(css => { %>
+            <link rel="stylesheet" href="<%= css %>">
+        <% }); %>
+    <% } %>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="/" class="navbar-brand">
+                <% if (settings.logo_url) { %>
+                    <img src="<%= settings.logo_url %>" alt="<%= settings.store_name %>" style="height: 40px; margin-right: 0.5rem;">
+                <% } else { %>
+                    <i class="fas fa-store"></i>
+                <% } %>
+                <%= settings.store_name || 'RSA Store' %>
+            </a>
+            
+            <button class="navbar-toggle" id="navbarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <ul class="navbar-menu" id="navbarMenu">
+                <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="/shop"><i class="fas fa-shopping-bag"></i> Shop</a></li>
+                <li><a href="/blog"><i class="fas fa-newspaper"></i> Blog</a></li>
+                <li><a href="/recover"><i class="fas fa-receipt"></i> Recovery</a></li>
+                <li><a href="/contact"><i class="fas fa-envelope"></i> Contact</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <a href="/shop" class="btn btn-primary btn-sm">
+                    <i class="fas fa-shopping-cart"></i>
+                    Browse Products
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main>

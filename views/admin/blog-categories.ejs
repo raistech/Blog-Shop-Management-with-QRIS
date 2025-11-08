@@ -1,0 +1,300 @@
+<%- include('../partials/admin-header') %>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>
+                        <i class="fas fa-folder"></i>
+                        Blog Categories
+                    </h1>
+                    <p>Manage blog post categories</p>
+                </div>
+                <button onclick="showAddModal()" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Add Category
+                </button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <% if (categories && categories.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Slug</th>
+                                <th>Description</th>
+                                <th>Posts</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% categories.forEach(category => { %>
+                                <tr>
+                                    <td><strong><%= category.name %></strong></td>
+                                    <td><code><%= category.slug %></code></td>
+                                    <td><%= category.description || '-' %></td>
+                                    <td>
+                                        <span class="badge <%= category.post_count > 0 ? 'badge-info' : 'badge-secondary' %>">
+                                            <%= category.post_count || 0 %>
+                                        </span>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <button onclick='editCategory(<%= JSON.stringify(category) %>)' class="btn btn-sm btn-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteCategory(<%= category.id %>, '<%= category.name %>')" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div style="text-align: center; padding: 4rem 2rem;">
+                    <div style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <h3>No Categories Yet</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                        Create your first blog category to organize posts
+                    </p>
+                    <button onclick="showAddModal()" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Add First Category
+                    </button>
+                </div>
+            <% } %>
+        </div>
+    </main>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="categoryModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add Category</h2>
+            <button onclick="closeModal()" class="modal-close">&times;</button>
+        </div>
+        <form id="categoryForm" onsubmit="saveCategory(event)">
+            <input type="hidden" id="categoryId">
+            
+            <div class="form-group">
+                <label class="form-label">Category Name *</label>
+                <input type="text" id="categoryName" class="form-input" required placeholder="e.g. Tutorial">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea id="categoryDescription" class="form-input" rows="3" placeholder="Brief description..."></textarea>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Save Category
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.modal form {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-info {
+    background: rgba(96, 165, 250, 0.2);
+    color: var(--info);
+}
+
+.badge-secondary {
+    background: rgba(156, 163, 175, 0.2);
+    color: var(--text-muted);
+}
+</style>
+
+<script>
+function showAddModal() {
+    document.getElementById('modalTitle').textContent = 'Add Category';
+    document.getElementById('categoryId').value = '';
+    document.getElementById('categoryName').value = '';
+    document.getElementById('categoryDescription').value = '';
+    document.getElementById('categoryModal').classList.add('active');
+}
+
+function editCategory(category) {
+    document.getElementById('modalTitle').textContent = 'Edit Category';
+    document.getElementById('categoryId').value = category.id;
+    document.getElementById('categoryName').value = category.name;
+    document.getElementById('categoryDescription').value = category.description || '';
+    document.getElementById('categoryModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('categoryModal').classList.remove('active');
+}
+
+async function saveCategory(event) {
+    event.preventDefault();
+    
+    const id = document.getElementById('categoryId').value;
+    const name = document.getElementById('categoryName').value;
+    const description = document.getElementById('categoryDescription').value;
+    
+    const url = id ? `/admin/blog/categories/edit/${id}` : '/admin/blog/categories/create';
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to save category'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deleteCategory(id, name) {
+    if (!confirm(`Are you sure you want to delete "${name}"?\n\nThis will not delete posts in this category, but they will be uncategorized.`)) {
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('_csrf', '<%= csrfToken %>');
+        
+        const response = await fetch(`/admin/blog/categories/delete/${id}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete category'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Close modal on ESC key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeModal();
+    }
+});
+
+// Close modal on background click
+document.getElementById('categoryModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+        closeModal();
+    }
+});
+</script>
+
+<%- include('../partials/admin-footer') %>

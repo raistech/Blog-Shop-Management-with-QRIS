@@ -1,0 +1,457 @@
+<%- include('../partials/admin-header') %>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <h1><i class="fas fa-shopping-cart"></i> Orders</h1>
+            <p>Manage customer orders and transactions</p>
+        </div>
+        
+        <!-- Order Stats -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-label">Paid Orders</div>
+                <h3 class="stat-value">
+                    <%= orders ? orders.filter(o => o.status === 'paid').length : 0 %>
+                </h3>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon orange">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-label">Pending Orders</div>
+                <h3 class="stat-value">
+                    <%= orders ? orders.filter(o => o.status === 'pending').length : 0 %>
+                </h3>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="stat-label">Total Revenue</div>
+                <h3 class="stat-value" style="font-size: 1.5rem;">
+                    Rp <%= orders ? orders.filter(o => o.status === 'paid').reduce((sum, o) => sum + o.total_amount, 0).toLocaleString('id-ID') : '0' %>
+                </h3>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <div class="stat-label">Total Orders</div>
+                <h3 class="stat-value">
+                    <%= orders ? orders.filter(o => o.status === 'paid').length : 0 %>
+                </h3>
+            </div>
+        </div>
+        
+        <!-- Filter & Search -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <form method="GET" action="/admin/orders">
+                <div class="flex" style="gap: 1rem; flex-wrap: wrap; align-items: center;">
+                    <div class="form-group" style="flex: 1; min-width: 200px; margin: 0;">
+                        <input 
+                            type="text" 
+                            name="search" 
+                            class="form-input" 
+                            placeholder="Search by invoice, email, product..."
+                            value="<%= typeof search !== 'undefined' ? search : '' %>"
+                        >
+                    </div>
+                    
+                    <select name="status" class="form-select" style="width: 150px;">
+                        <option value="">All Status</option>
+                        <option value="pending" <%= typeof statusFilter !== 'undefined' && statusFilter === 'pending' ? 'selected' : '' %>>Pending</option>
+                        <option value="paid" <%= typeof statusFilter !== 'undefined' && statusFilter === 'paid' ? 'selected' : '' %>>Paid</option>
+                    </select>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Orders Table -->
+        <% if (orders && orders.length > 0) { %>
+            <div class="card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Product</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% orders.forEach(order => { %>
+                            <tr>
+                                <td>
+                                    <strong style="font-family: monospace;"><%= order.invoice_number %></strong>
+                                </td>
+                                <td>
+                                    <%= order.product_name %>
+                                    <br>
+                                    <small style="color: var(--text-muted);">ID: <%= order.product_id %></small>
+                                </td>
+                                <td>
+                                    <% if (order.customer_email) { %>
+                                        <div><i class="fas fa-envelope"></i> <%= order.customer_email %></div>
+                                    <% } %>
+                                    <% if (order.customer_whatsapp) { %>
+                                        <div><i class="fab fa-whatsapp"></i> <%= order.customer_whatsapp %></div>
+                                    <% } %>
+                                    <% if (order.customer_telegram) { %>
+                                        <div><i class="fab fa-telegram"></i> <%= order.customer_telegram %></div>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <strong>Rp <%= order.total_amount.toLocaleString('id-ID') %></strong>
+                                    <br>
+                                    <small style="color: var(--text-muted);">
+                                        + Rp <%= order.unique_code %> (kode unik)
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="status-badge <%= order.status %>">
+                                        <% if (order.status === 'paid') { %>
+                                            <i class="fas fa-check"></i> Paid
+                                        <% } else { %>
+                                            <i class="fas fa-clock"></i> Pending
+                                        <% } %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <%= formatDateWIB(order.created_at, { 
+                                        day: '2-digit', 
+                                        month: 'short', 
+                                        year: 'numeric',
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                    }) %>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button onclick="viewOrderDetail('<%= order.invoice_number %>')" class="btn btn-primary btn-sm btn-icon" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <% if (order.status === 'paid') { %>
+                                            <button onclick="resendEmail('<%= order.invoice_number %>')" class="btn btn-success btn-sm btn-icon" title="Resend Email">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="card" style="text-align: center; padding: 4rem 2rem;">
+                <div style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3>No Orders Yet</h3>
+                <p style="color: var(--text-secondary);">
+                    Orders will appear here once customers make purchases
+                </p>
+            </div>
+        <% } %>
+    </main>
+</div>
+
+<!-- Order Detail Modal -->
+<div id="orderModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3 id="modalTitle"><i class="fas fa-receipt"></i> Order Details</h3>
+            <button onclick="closeOrderModal()" class="modal-close">&times;</button>
+        </div>
+        
+        <div id="orderDetails" style="padding: 1.5rem;">
+            <!-- Will be populated by JS -->
+        </div>
+    </div>
+</div>
+
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.modal.active {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    padding: 0.5rem;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+
+<script>
+    // Orders Management Script - Version 3.0.0 - Database timestamps are WIB (2025-11-07 22:20 WIB)
+    // Cache buster: <%= Date.now() %>
+    // CRITICAL FIX: Database stores timestamps in WIB format, NOT UTC!
+    // Store orders data safely
+    const ordersData = <%- JSON.stringify(orders || []) %>;
+    
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Helper function to format date in client-side with WIB timezone
+    // VERSION: 3.0 - Fixed: Database timestamps are already in WIB (2025-11-07)
+    // IMPORTANT: Database stores time in WIB, NOT UTC - no conversion needed!
+    function formatDateClient(dateString) {
+        // Database format: "2025-11-07 14:56:39" (already in WIB)
+        // We just need to parse and format it nicely
+        
+        let date;
+        if (dateString.includes('T') && dateString.includes('Z')) {
+            // ISO format with UTC indicator - convert to WIB
+            date = new Date(dateString);
+            date = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+        } else {
+            // Database format "YYYY-MM-DD HH:MM:SS" - already WIB, parse as-is
+            const parts = dateString.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+            if (parts) {
+                date = new Date(
+                    parseInt(parts[1]), // year
+                    parseInt(parts[2]) - 1, // month (0-indexed)
+                    parseInt(parts[3]), // day
+                    parseInt(parts[4]), // hour
+                    parseInt(parts[5]), // minute
+                    parseInt(parts[6])  // second
+                );
+            } else {
+                date = new Date(dateString);
+            }
+        }
+        
+        // Format for display
+        const day = String(date.getDate()).padStart(2, '0');
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+        
+        const result = `${day} ${month} ${year} pukul ${hour}.${minute}`;
+        
+        // Debug log
+        console.log('[formatDateClient v3.0] Input:', dateString, '→ Display:', result);
+        
+        return result;
+    }
+    
+    async function viewOrderDetail(invoiceNumber) {
+        const order = ordersData.find(o => o.invoice_number === invoiceNumber);
+        
+        if (!order) {
+            console.error('Order not found:', invoiceNumber);
+            return;
+        }
+        
+        document.getElementById('orderDetails').innerHTML = `
+            <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Invoice Number:</span>
+                    <strong style="font-family: monospace;">${escapeHtml(order.invoice_number)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Product:</span>
+                    <strong>${escapeHtml(order.product_name)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Product Price:</span>
+                    <span>Rp ${order.product_price.toLocaleString('id-ID')}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Unique Code:</span>
+                    <span style="color: var(--warning);">+ Rp ${order.unique_code}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);"><strong>Total Amount:</strong></span>
+                    <strong style="color: var(--success); font-size: 1.25rem;">Rp ${order.total_amount.toLocaleString('id-ID')}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Status:</span>
+                    <span class="status-badge ${order.status}">
+                        ${order.status === 'paid' ? '<i class="fas fa-check"></i> Paid' : '<i class="fas fa-clock"></i> Pending'}
+                    </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
+                    <span style="color: var(--text-muted);">Order Date:</span>
+                    <span>${formatDateClient(order.created_at)}</span>
+                </div>
+            </div>
+            
+            <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
+                <h4 style="margin-top: 0;"><i class="fas fa-user"></i> Customer Information</h4>
+                ${order.customer_email ? `<p><i class="fas fa-envelope"></i> <strong>Email:</strong> ${escapeHtml(order.customer_email)}</p>` : ''}
+                ${order.customer_whatsapp ? `<p><i class="fab fa-whatsapp"></i> <strong>WhatsApp:</strong> ${escapeHtml(order.customer_whatsapp)}</p>` : ''}
+                ${order.customer_telegram ? `<p><i class="fab fa-telegram"></i> <strong>Telegram:</strong> ${escapeHtml(order.customer_telegram)}</p>` : ''}
+            </div>
+            
+            ${order.status === 'paid' ? `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Order Completed</strong><br>
+                    Paid at: ${order.paid_at ? formatDateClient(order.paid_at) : 'N/A'}
+                </div>
+            ` : ''}
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                ${order.customer_whatsapp ? `
+                    <a href="https://wa.me/${escapeHtml(order.customer_whatsapp)}" target="_blank" class="btn btn-success" style="flex: 1;">
+                        <i class="fab fa-whatsapp"></i>
+                        Contact via WA
+                    </a>
+                ` : ''}
+                
+                ${order.customer_email ? `
+                    <a href="mailto:${escapeHtml(order.customer_email)}" class="btn btn-primary" style="flex: 1;">
+                        <i class="fas fa-envelope"></i>
+                        Send Email
+                    </a>
+                ` : ''}
+            </div>
+        `;
+        
+        document.getElementById('orderModal').classList.add('active');
+    }
+    
+    function closeOrderModal() {
+        document.getElementById('orderModal').classList.remove('active');
+    }
+    
+    async function resendEmail(invoiceNumber) {
+        if (!confirm('Resend invoice email to customer?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/admin/orders/${invoiceNumber}/resend-invoice`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '<%= csrfToken %>'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(`✅ Invoice email successfully sent to ${data.email}\n\nNew download link has been generated and sent.`);
+            } else {
+                alert(`❌ Failed to send email:\n${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error resending email:', error);
+            alert('❌ Error sending email. Please check server logs.');
+        }
+    }
+    
+    // Close modal on escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeOrderModal();
+        }
+    });
+    
+    // Close modal on background click
+    document.getElementById('orderModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+            closeOrderModal();
+        }
+    });
+</script>
+
+<%- include('../partials/admin-footer') %>

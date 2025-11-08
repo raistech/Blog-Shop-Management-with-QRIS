@@ -1,0 +1,131 @@
+<% const pageTitle = content.title || 'Link Download Expired'; %>
+<%- include('partials/header') %>
+
+<div class="container" style="margin-top: 3rem; margin-bottom: 4rem;">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #f59e0b, #ef4444); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 3rem; color: white; box-shadow: 0 20px 60px rgba(239, 68, 68, 0.3);">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h1 style="color: #ef4444; margin-bottom: 1rem;"><%= content.title %></h1>
+            <p style="color: var(--text-secondary); font-size: 1.125rem;">
+                <%= content.subtitle %>
+            </p>
+        </div>
+        
+        <div class="card">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <%= content.main_message %>
+            </div>
+            
+            <h3 style="margin-top: 2rem;"><i class="fas fa-lightbulb"></i> Solusi</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Jangan khawatir! Anda bisa mendapatkan link download baru dengan mudah:
+            </p>
+            
+            <div style="background: rgba(102, 126, 234, 0.1); padding: 1.5rem; border-radius: var(--radius-lg); border-left: 4px solid var(--primary); margin-bottom: 2rem;">
+                <h4 style="margin-top: 0; color: var(--primary);">
+                    <i class="fas fa-key"></i> Request Link Download Baru
+                </h4>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                    Gunakan fitur Invoice Recovery untuk mendapatkan link download baru. Anda hanya perlu:
+                </p>
+                <ol style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 1.5rem;">
+                    <li>Nomor Invoice pesanan Anda</li>
+                    <li>Email atau WhatsApp yang digunakan saat checkout</li>
+                </ol>
+                <a href="/recover" class="btn btn-primary btn-lg" style="width: 100%;">
+                    <i class="fas fa-redo"></i>
+                    <%= content.cta_text %>
+                </a>
+            </div>
+            
+            <div style="padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                <h4><i class="fas fa-info-circle"></i> <%= content.info_title %></h4>
+                <ul style="color: var(--text-secondary); line-height: 1.8; margin: 0;">
+                    <li>Link download berlaku selama <%= settings.token_expiry_minutes || '60' %> menit setelah dibuat</li>
+                    <li>Anda bisa request link baru kapan saja tanpa batasan</li>
+                    <li>File produk Anda tetap tersimpan dengan aman</li>
+                    <li>Link baru akan dikirim ke email Anda</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- FAQ Section -->
+        <% if (faqs && faqs.length > 0) { %>
+        <div class="card" style="margin-top: 2rem;">
+            <h3><i class="fas fa-question-circle"></i> Pertanyaan Umum</h3>
+            
+            <div style="margin-top: 1.5rem;">
+                <% faqs.forEach(faq => { %>
+                    <details style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); cursor: pointer;">
+                        <summary style="font-weight: 600; color: var(--text-primary);">
+                            <i class="fas fa-chevron-right" style="transition: transform 0.2s;"></i>
+                            <%= faq.question %>
+                        </summary>
+                        <p style="margin-top: 1rem; padding-left: 1.5rem; color: var(--text-secondary);">
+                            <%= faq.answer %>
+                        </p>
+                    </details>
+                <% }); %>
+            </div>
+        </div>
+        <% } %>
+        
+        <!-- Support Contact -->
+        <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); border-radius: var(--radius-lg);">
+            <h4 style="margin-top: 0;"><i class="fas fa-headset"></i> Butuh Bantuan?</h4>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                Tim support kami siap membantu Anda
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="/contact" class="btn btn-secondary">
+                    <i class="fas fa-envelope"></i>
+                    Hubungi Support
+                </a>
+                <a href="/" class="btn btn-outline">
+                    <i class="fas fa-home"></i>
+                    Kembali ke Beranda
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+details[open] summary i {
+    transform: rotate(90deg);
+}
+
+details summary {
+    list-style: none;
+}
+
+details summary::-webkit-details-marker {
+    display: none;
+}
+
+details summary i {
+    display: inline-block;
+    margin-right: 0.5rem;
+    font-size: 0.75rem;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.6s ease-out;
+}
+</style>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,79 @@
+<% const pageTitle = page.title; %>
+<%- include('partials/header') %>
+
+<div class="container" style="margin-top: 3rem; margin-bottom: 4rem;">
+    <article class="card" style="max-width: 900px; margin: 0 auto;">
+        <h1 style="margin-bottom: 1.5rem;"><%= page.title %></h1>
+        <div style="border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; padding-bottom: 1rem;">
+            <span style="color: var(--text-muted); font-size: 0.875rem;">
+                <i class="fas fa-clock"></i> Last updated: <%= formatDateWIB(page.updated_at, { day: '2-digit', month: 'long', year: 'numeric' }) %>
+            </span>
+        </div>
+        
+        <div class="page-content" style="line-height: 1.8; color: var(--text-secondary);">
+            <%- page.content %>
+        </div>
+        
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color); text-align: center;">
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Need help? Contact us!</p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <% if (settings.store_whatsapp) { %>
+                    <a href="https://wa.me/<%= settings.store_whatsapp %>" target="_blank" class="btn btn-success">
+                        <i class="fab fa-whatsapp"></i>
+                        WhatsApp
+                    </a>
+                <% } %>
+                <% if (settings.store_telegram) { %>
+                    <a href="https://t.me/<%= settings.store_telegram.replace('@', '') %>" target="_blank" class="btn btn-primary">
+                        <i class="fab fa-telegram"></i>
+                        Telegram
+                    </a>
+                <% } %>
+                <% if (settings.store_email) { %>
+                    <a href="mailto:<%= settings.store_email %>" class="btn btn-outline">
+                        <i class="fas fa-envelope"></i>
+                        Email
+                    </a>
+                <% } %>
+            </div>
+        </div>
+    </article>
+</div>
+
+<style>
+    .page-content h2 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .page-content h3 {
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary);
+    }
+    
+    .page-content p {
+        margin-bottom: 1rem;
+    }
+    
+    .page-content ul, .page-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .page-content li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .page-content a {
+        color: var(--primary);
+        text-decoration: underline;
+    }
+    
+    .page-content a:hover {
+        color: var(--accent);
+    }
+</style>
+
+<%- include('partials/footer') %>

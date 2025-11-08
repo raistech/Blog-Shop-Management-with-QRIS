@@ -1,0 +1,151 @@
+<% const pageTitle = 'Thank You'; %>
+<%- include('partials/header') %>
+
+<div class="container" style="margin-top: 4rem; margin-bottom: 4rem;">
+    <div style="max-width: 700px; margin: 0 auto; text-align: center;">
+        <!-- Success Icon -->
+        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--success), #22c55e); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; font-size: 4rem; color: white; box-shadow: 0 10px 40px rgba(74, 222, 128, 0.4); animation: scaleIn 0.5s ease;">
+            <i class="fas fa-check"></i>
+        </div>
+        
+        <h1 style="margin-bottom: 1rem;">Pembayaran Berhasil!</h1>
+        <p style="font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 3rem;">
+            Terima kasih atas pembelian Anda. Transaksi telah berhasil diproses.
+        </p>
+        
+        <!-- Order Details Card -->
+        <div class="card" style="text-align: left;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="display: inline-block; padding: 0.75rem 1.5rem; background: rgba(74, 222, 128, 0.1); color: var(--success); border-radius: var(--radius-full); font-weight: 700;">
+                    <i class="fas fa-receipt"></i>
+                    Invoice: <%= order.invoice_number %>
+                </div>
+            </div>
+            
+            <h3><i class="fas fa-info-circle"></i> Detail Pesanan</h3>
+            
+            <div style="margin-top: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Produk:</span>
+                    <strong><%= order.product_name %></strong>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Total Dibayar:</span>
+                    <strong style="color: var(--success); font-size: 1.25rem;">Rp <%= order.total_amount.toLocaleString('id-ID') %></strong>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-muted);">Status:</span>
+                    <span class="badge" style="background: var(--success); color: white; padding: 0.5rem 1rem; border-radius: var(--radius-full);">
+                        <i class="fas fa-check-circle"></i> Lunas
+                    </span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; padding: 1rem 0;">
+                    <span style="color: var(--text-muted);">Tanggal:</span>
+                    <span><%= formatDateWIB(order.created_at, { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- What's Next -->
+        <div class="card" style="margin-top: 2rem; text-align: left; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(168, 85, 247, 0.1));">
+            <h3><i class="fas fa-lightbulb"></i> Langkah Selanjutnya</h3>
+            
+            <div style="margin-top: 1.5rem;">
+                <div style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-weight: 700;">1</div>
+                    <div>
+                        <h4 style="margin: 0 0 0.5rem 0;">Cek Email Anda</h4>
+                        <p style="margin: 0; color: var(--text-secondary);">
+                            Invoice dan link download telah dikirim ke <strong><%= order.customer_email || 'kontak Anda' %></strong>
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-weight: 700;">2</div>
+                    <div>
+                        <h4 style="margin: 0 0 0.5rem 0;">Download Produk</h4>
+                        <p style="margin: 0; color: var(--text-secondary);">
+                            Klik link download di email. Link berlaku selama 60 menit.
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: start; gap: 1rem;">
+                    <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-weight: 700;">3</div>
+                    <div>
+                        <h4 style="margin: 0 0 0.5rem 0;">Butuh Link Baru?</h4>
+                        <p style="margin: 0; color: var(--text-secondary);">
+                            Gunakan <a href="/recover">halaman recovery</a> dengan nomor invoice Anda.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alert -->
+        <div class="alert alert-info" style="margin-top: 2rem; text-align: left;">
+            <i class="fas fa-save"></i>
+            <strong>Simpan Nomor Invoice Anda:</strong> <code style="background: var(--bg-secondary); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-family: monospace;"><%= order.invoice_number %></code>
+            <br>Anda akan memerlukan nomor ini untuk keperluan support atau request link download baru.
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; margin-top: 3rem; flex-wrap: wrap;">
+            <a href="/recover" class="btn btn-primary" style="flex: 1;">
+                <i class="fas fa-download"></i>
+                Request Link Download
+            </a>
+            
+            <a href="/shop" class="btn btn-outline" style="flex: 1;">
+                <i class="fas fa-shopping-bag"></i>
+                Belanja Lagi
+            </a>
+        </div>
+        
+        <!-- Contact Support -->
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Butuh bantuan?</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <% if (settings.store_whatsapp) { %>
+                    <a href="https://wa.me/<%= settings.store_whatsapp %>" target="_blank" class="btn btn-secondary btn-sm">
+                        <i class="fab fa-whatsapp"></i>
+                        WhatsApp
+                    </a>
+                <% } %>
+                
+                <% if (settings.store_telegram) { %>
+                    <a href="https://t.me/<%= settings.store_telegram.replace('@', '') %>" target="_blank" class="btn btn-secondary btn-sm">
+                        <i class="fab fa-telegram"></i>
+                        Telegram
+                    </a>
+                <% } %>
+                
+                <% if (settings.store_email) { %>
+                    <a href="mailto:<%= settings.store_email %>" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-envelope"></i>
+                        Email
+                    </a>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+
+<%- include('partials/footer') %>

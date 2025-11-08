@@ -1,0 +1,407 @@
+<%- include('../partials/admin-header') %>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>
+                        <i class="fas fa-<%= product ? 'edit' : 'plus' %>"></i>
+                        <%= product ? 'Edit Product' : 'Add New Product' %>
+                    </h1>
+                </div>
+                <a href="/admin/products" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back
+                </a>
+            </div>
+        </div>
+        
+        <form id="productForm" method="POST" action="<%= product ? `/admin/products/edit/${product.id}` : '/admin/products/create' %>" enctype="multipart/form-data">
+            <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+                <!-- Main Content -->
+                <div>
+                    <div class="card">
+                        <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Product Name *</label>
+                            <input 
+                                type="text" 
+                                name="name" 
+                                id="name"
+                                class="form-input" 
+                                placeholder="Product name"
+                                value="<%= product ? product.name : '' %>"
+                                required
+                            >
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea 
+                                name="description" 
+                                id="description"
+                                class="form-textarea" 
+                                rows="5"
+                                placeholder="Product description..."
+                            ><%= product ? product.description || '' : '' %></textarea>
+                        </div>
+                        
+                        <div class="grid grid-2">
+                            <div class="form-group">
+                                <label class="form-label">Price (IDR) *</label>
+                                <input 
+                                    type="number" 
+                                    name="price" 
+                                    id="price"
+                                    class="form-input" 
+                                    placeholder="50000"
+                                    value="<%= product ? product.price : '' %>"
+                                    required
+                                    min="0"
+                                >
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Stock *</label>
+                                <input 
+                                    type="number" 
+                                    name="stock" 
+                                    id="stock"
+                                    class="form-input" 
+                                    placeholder="100"
+                                    value="<%= product ? product.stock : '999' %>"
+                                    required
+                                    min="0"
+                                >
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select name="category_id" id="category_id" class="form-select">
+                                <option value="">-- Select Category --</option>
+                                <% categories.forEach(cat => { %>
+                                    <option value="<%= cat.id %>" <%= product && product.category_id === cat.id ? 'selected' : '' %>>
+                                        <%= cat.icon %> <%= cat.name %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Yang Anda Dapatkan (Features)</label>
+                            <p class="form-help" style="margin-bottom: 0.5rem;">Satu fitur per baris. Akan tampil dengan checkmark di product detail.</p>
+                            <textarea 
+                                name="features" 
+                                id="features"
+                                class="form-input" 
+                                rows="6"
+                                placeholder="File digital berkualitas tinggi&#10;Pembayaran aman dengan QRIS&#10;Download link instant via email&#10;Customer support 24/7&#10;Garansi uang kembali 100%"
+                            ><%= product && product.features ? (typeof product.features === 'string' ? JSON.parse(product.features).join('\n') : product.features.join('\n')) : 'File digital berkualitas tinggi\nPembayaran aman dengan QRIS\nDownload link instant via email\nCustomer support 24/7\nGaransi uang kembali 100%' %></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 2rem;">
+                        <h3><i class="fas fa-download"></i> Digital Product Settings</h3>
+                        
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input 
+                                    type="checkbox" 
+                                    name="is_digital" 
+                                    id="is_digital"
+                                    <%= product && product.is_digital ? 'checked' : '' %>
+                                    onchange="toggleDigitalSettings()"
+                                >
+                                <span>This is a digital product</span>
+                            </label>
+                        </div>
+                        
+                        <div id="digitalSettings" style="<%= product && product.is_digital ? '' : 'display: none;' %>">
+                            <div class="form-group">
+                                <label class="form-label">File Type</label>
+                                <select name="file_type" id="file_type" class="form-select">
+                                    <option value="">-- Select Type --</option>
+                                    <option value="ebook" <%= product && product.file_type === 'ebook' ? 'selected' : '' %>>E-Book</option>
+                                    <option value="video" <%= product && product.file_type === 'video' ? 'selected' : '' %>>Video</option>
+                                    <option value="account" <%= product && product.file_type === 'account' ? 'selected' : '' %>>Account</option>
+                                    <option value="template" <%= product && product.file_type === 'template' ? 'selected' : '' %>>Template</option>
+                                    <option value="software" <%= product && product.file_type === 'software' ? 'selected' : '' %>>Software</option>
+                                    <option value="other" <%= product && product.file_type === 'other' ? 'selected' : '' %>>Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Download Link (External)</label>
+                                <input 
+                                    type="url" 
+                                    name="download_link" 
+                                    id="download_link"
+                                    class="form-input" 
+                                    placeholder="https://drive.google.com/..."
+                                    value="<%= product ? product.download_link || '' : '' %>"
+                                    onchange="clearProductFile()"
+                                >
+                                <p class="form-help">Google Drive, Dropbox, atau direct link</p>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 1rem 0; color: var(--text-muted);">
+                                <strong>OR</strong>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Upload File (Local)</label>
+                                <input 
+                                    type="file" 
+                                    name="product_file" 
+                                    id="product_file"
+                                    class="form-input"
+                                    accept="*/*"
+                                    onchange="previewProductFile(this)"
+                                >
+                                <p class="form-help">Max 100MB. Will save when you click Save/Create.</p>
+                                
+                                <div id="filePreview" style="margin-top: 0.5rem;">
+                                    <% if (product && product.file_path) { %>
+                                        <p style="color: var(--success);">
+                                            <i class="fas fa-check-circle"></i>
+                                            Current file: <code><%= product.file_path %></code>
+                                        </p>
+                                    <% } %>
+                                </div>
+                                
+                                <!-- Hidden fields -->
+                                <input type="hidden" name="old_file_path" value="<%= product ? product.file_path || '' : '' %>">
+                                <input type="hidden" name="file_upload_marker" id="file_upload_marker" value="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sidebar -->
+                <div>
+                    <div class="card">
+                        <h3><i class="fas fa-image"></i> Product Image</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Upload Image</label>
+                            <input 
+                                type="file" 
+                                id="image_file"
+                                name="image_file"
+                                class="form-input" 
+                                accept="image/*"
+                                onchange="previewProductImage(this)"
+                            >
+                            <p class="form-help">JPG, PNG, GIF, WebP, SVG - Max 10MB. Will save when you click Save/Create.</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 1rem 0; color: var(--text-muted);">
+                            <strong>OR</strong>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Image URL</label>
+                            <input 
+                                type="url" 
+                                name="image_url" 
+                                id="image_url"
+                                class="form-input" 
+                                placeholder="https://..."
+                                value="<%= product ? product.image_url || '' : '' %>"
+                                onchange="updateImagePreview()"
+                            >
+                            <p class="form-help">Atau paste URL external</p>
+                        </div>
+                        
+                        <div id="imagePreview" style="margin-top: 1rem;">
+                            <% if (product && product.image_url) { %>
+                                <img src="<%= product.image_url %>" alt="Preview" style="width: 100%; border-radius: var(--radius-md);">
+                            <% } else { %>
+                                <div style="width: 100%; aspect-ratio: 1; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                                    <i class="fas fa-image" style="font-size: 3rem;"></i>
+                                </div>
+                            <% } %>
+                        </div>
+                        
+                        <!-- Hidden fields -->
+                        <input type="hidden" name="old_image_url" value="<%= product ? product.image_url || '' : '' %>">
+                        <input type="hidden" name="image_upload_marker" id="image_upload_marker" value="">
+                    </div>
+                    
+                    <div class="card" style="margin-top: 1rem;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;" id="submitBtn">
+                            <i class="fas fa-save"></i>
+                            <%= product ? 'Update Product' : 'Create Product' %>
+                        </button>
+                        
+                        <% if (product) { %>
+                            <a href="/product/<%= product.slug %>" target="_blank" class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;">
+                                <i class="fas fa-external-link-alt"></i>
+                                View Product
+                            </a>
+                            
+                            <button type="button" onclick="deleteProduct()" class="btn btn-danger" style="width: 100%; margin-top: 0.5rem;">
+                                <i class="fas fa-trash"></i>
+                                Delete Product
+                            </button>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+</div>
+
+<script>
+    function toggleDigitalSettings() {
+        const isDigital = document.getElementById('is_digital').checked;
+        document.getElementById('digitalSettings').style.display = isDigital ? 'block' : 'none';
+    }
+    
+    function updateImagePreview() {
+        const imageUrl = document.getElementById('image_url').value;
+        const preview = document.getElementById('imagePreview');
+        
+        if (imageUrl) {
+            preview.innerHTML = `<img src="${imageUrl}" alt="Preview" style="width: 100%; border-radius: var(--radius-md);">`;
+        } else {
+            preview.innerHTML = `
+                <div style="width: 100%; aspect-ratio: 1; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                    <i class="fas fa-image" style="font-size: 3rem;"></i>
+                </div>
+            `;
+        }
+    }
+    
+    function previewProductImage(input) {
+        const file = input.files[0];
+        if (!file) {
+            // Clear marker if no file
+            document.getElementById('image_upload_marker').value = '';
+            return;
+        }
+        
+        // Validate file size (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            RSAStore.showNotification('Image size must be less than 10MB', 'error');
+            input.value = '';
+            document.getElementById('image_upload_marker').value = '';
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width: 100%; border-radius: var(--radius-md);">`;
+            
+            // Set marker to indicate file upload (hidden field)
+            document.getElementById('image_upload_marker').value = '1';
+            
+            // Clear image_url field when uploading new file
+            document.getElementById('image_url').value = '';
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // Clear file input and marker when user enters URL
+    document.getElementById('image_url')?.addEventListener('input', function() {
+        if (this.value && this.value.trim() !== '') {
+            document.getElementById('image_file').value = '';
+            document.getElementById('image_upload_marker').value = '';
+        }
+    });
+    
+    // ==================== PRODUCT FILE UPLOAD ====================
+    
+    function previewProductFile(input) {
+        const file = input.files[0];
+        if (!file) {
+            // Clear marker if no file
+            document.getElementById('file_upload_marker').value = '';
+            document.getElementById('filePreview').innerHTML = '';
+            return;
+        }
+        
+        // Validate file size (100MB)
+        if (file.size > 100 * 1024 * 1024) {
+            RSAStore.showNotification('File size must be less than 100MB', 'error');
+            input.value = '';
+            document.getElementById('file_upload_marker').value = '';
+            document.getElementById('filePreview').innerHTML = '';
+            return;
+        }
+        
+        // Show file info preview
+        const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+        const preview = document.getElementById('filePreview');
+        preview.innerHTML = `
+            <p style="color: var(--primary);">
+                <i class="fas fa-file"></i>
+                <strong>Selected:</strong> ${file.name} (${sizeInMB} MB)
+                <br><small style="color: var(--text-muted);">Will be uploaded when you save</small>
+            </p>
+        `;
+        
+        // Set marker to indicate file upload (hidden field)
+        document.getElementById('file_upload_marker').value = '1';
+        
+        // Clear download_link field when uploading new file
+        document.getElementById('download_link').value = '';
+    }
+    
+    function clearProductFile() {
+        const downloadLink = document.getElementById('download_link').value;
+        if (downloadLink && downloadLink.trim() !== '') {
+            document.getElementById('product_file').value = '';
+            document.getElementById('file_upload_marker').value = '';
+            document.getElementById('filePreview').innerHTML = '';
+        }
+    }
+    
+    <% if (product) { %>
+    async function deleteProduct() {
+        if (!confirm('Are you sure you want to delete this product?')) {
+            return;
+        }
+        
+        try {
+            const formData = new FormData();
+            formData.append('_csrf', '<%= csrfToken %>');
+            
+            const response = await fetch('/admin/products/delete/<%= product.id %>', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const text = await response.text();
+                console.error('Delete response:', text);
+                throw new Error(`Server error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                RSAStore.showNotification('Product deleted', 'success');
+                setTimeout(() => {
+                    window.location.href = '/admin/products';
+                }, 1000);
+            } else {
+                RSAStore.showNotification(data.error || 'Failed to delete', 'error');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            RSAStore.showNotification('Error: ' + error.message, 'error');
+        }
+    }
+    <% } %>
+</script>
+
+</body>
+</html>

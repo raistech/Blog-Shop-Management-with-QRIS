@@ -1,0 +1,447 @@
+<% const pageTitle = post.title; %>
+<%- include('../partials/header') %>
+
+<article class="container" style="margin-top: 3rem; margin-bottom: 4rem;">
+    <div style="max-width: 900px; margin: 0 auto;">
+        <!-- Breadcrumb -->
+        <nav style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                <a href="/" style="color: var(--text-muted);">Home</a>
+                <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                <a href="/blog" style="color: var(--text-muted);">Blog</a>
+                <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+                <span style="color: var(--text-primary);"><%= post.title %></span>
+            </div>
+        </nav>
+        
+        <!-- Post Header -->
+        <header style="margin-bottom: 3rem;">
+            <h1 style="font-size: 2.5rem; margin-bottom: 1.5rem; line-height: 1.2;">
+                <%= post.title %>
+            </h1>
+            
+            <!-- Post Meta -->
+            <div style="display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; padding: 1rem 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted);">
+                    <i class="fas fa-user-circle"></i>
+                    <span><%= post.author_name || 'Admin' %></span>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted);">
+                    <i class="fas fa-calendar"></i>
+                    <span><%= formatDateWIB(post.published_at, { day: '2-digit', month: 'long', year: 'numeric' }) %></span>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted);">
+                    <i class="fas fa-eye"></i>
+                    <span><%= post.views %> views</span>
+                </div>
+                
+                <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                    <button type="button" onclick="shareToWhatsApp()" class="btn btn-success btn-sm" title="Share to WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
+                    <button type="button" onclick="shareToTelegram()" class="btn btn-info btn-sm" title="Share to Telegram">
+                        <i class="fab fa-telegram"></i>
+                    </button>
+                    <button type="button" onclick="copyLinkToClipboard()" class="btn btn-secondary btn-sm" id="copyLinkBtn" title="Copy Link">
+                        <i class="fas fa-link"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Featured Image -->
+        <% if (post.featured_image) { %>
+            <div style="margin-bottom: 3rem;">
+                <img src="<%= post.featured_image %>" alt="<%= post.title %>" style="width: 100%; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);">
+            </div>
+        <% } %>
+        
+        <!-- Post Content -->
+        <div class="post-content" style="margin-bottom: 4rem; line-height: 1.8; font-size: 1.1rem;">
+            <%- contentHtml %>
+        </div>
+        
+        <!-- Downloads Section -->
+        <% if (downloads && downloads.length > 0) { %>
+            <div class="card" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(168, 85, 247, 0.1)); margin-bottom: 3rem;">
+                <h3><i class="fas fa-download"></i> Download Resources</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                    File gratis untuk membantu Anda. Klik tombol download untuk mendapatkan link.
+                </p>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <% downloads.forEach((download, index) => { %>
+                        <div class="card" style="background: var(--bg-secondary); border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0 0 0.5rem 0;">
+                                        <i class="fas fa-file-download"></i>
+                                        <%= download.title %>
+                                    </h4>
+                                    <div style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+                                        <% if (download.file_size) { %>
+                                            <span><i class="fas fa-hdd"></i> <%= (download.file_size / 1024 / 1024).toFixed(2) %> MB</span>
+                                        <% } %>
+                                        <span><i class="fas fa-download"></i> <%= download.download_count %> downloads</span>
+                                        <% if (download.requires_token) { %>
+                                            <span style="color: var(--primary);"><i class="fas fa-shield-alt"></i> Protected</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <% if (download.requires_token) { %>
+                                    <button 
+                                        onclick="getDownloadLink(<%= download.id %>, '<%= download.title %>')" 
+                                        class="btn btn-primary"
+                                        id="downloadBtn<%= download.id %>"
+                                    >
+                                        <i class="fas fa-download"></i>
+                                        Get Download Link
+                                    </button>
+                                <% } else { %>
+                                    <a href="<%= download.file_url %>" target="_blank" class="btn btn-success">
+                                        <i class="fas fa-download"></i>
+                                        Download Now
+                                    </a>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        <% } %>
+        
+        <!-- Share Section -->
+        <div class="card" style="text-align: center; background: var(--bg-tertiary); margin-bottom: 3rem;">
+            <h3><i class="fas fa-heart"></i> Suka artikel ini?</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Share ke teman-teman Anda!
+            </p>
+            
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <button type="button" onclick="window.shareToWhatsApp()" class="btn btn-success">
+                    <i class="fab fa-whatsapp"></i>
+                    WhatsApp
+                </button>
+                
+                <button type="button" onclick="window.shareToTelegram()" class="btn btn-primary">
+                    <i class="fab fa-telegram"></i>
+                    Telegram
+                </button>
+                
+                <button type="button" onclick="window.copyLinkToClipboard()" class="btn btn-secondary" id="copyLinkBtnLarge">
+                    <i class="fas fa-link"></i>
+                    Copy Link
+                </button>
+            </div>
+        </div>
+        
+        <!-- Back to Blog -->
+        <div style="text-align: center;">
+            <a href="/blog" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                Kembali ke Blog
+            </a>
+        </div>
+    </div>
+</article>
+
+<!-- Modal removed - Auto-generate token without email now -->
+
+<style>
+    /* Post Content Styling */
+    .post-content {
+        font-size: 1.125rem;
+        line-height: 1.8;
+        color: var(--text-secondary);
+    }
+    
+    .post-content h2,
+    .post-content h3,
+    .post-content h4 {
+        color: var(--text-primary);
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .post-content h2 {
+        font-size: 2rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .post-content h3 {
+        font-size: 1.5rem;
+    }
+    
+    .post-content p {
+        margin-bottom: 1.5rem;
+    }
+    
+    .post-content ul,
+    .post-content ol {
+        margin-bottom: 1.5rem;
+        padding-left: 2rem;
+    }
+    
+    .post-content li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .post-content a {
+        color: var(--primary-light);
+        text-decoration: underline;
+    }
+    
+    .post-content img {
+        max-width: 100%;
+        border-radius: var(--radius-lg);
+        margin: 2rem 0;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .post-content blockquote {
+        border-left: 4px solid var(--primary);
+        padding-left: 1.5rem;
+        margin: 2rem 0;
+        font-style: italic;
+        color: var(--text-muted);
+    }
+    
+    .post-content code {
+        background: var(--bg-secondary);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+    
+    .post-content pre {
+        background: var(--bg-secondary);
+        padding: 1.5rem;
+        border-radius: var(--radius-lg);
+        overflow-x: auto;
+        margin: 2rem 0;
+    }
+    
+    .post-content pre code {
+        background: none;
+        padding: 0;
+    }
+</style>
+
+<script>
+    // Declare all functions in global scope
+    window.shareToWhatsApp = null;
+    window.shareToTelegram = null;
+    window.copyLinkToClipboard = null;
+    
+    // Auto-generate download link without email
+    async function getDownloadLink(downloadId, title) {
+        const btn = document.getElementById('downloadBtn' + downloadId);
+        
+        // Disable button and show loading
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        
+        try {
+            const response = await fetch('/blog/download/generate-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    download_id: downloadId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Show success notification
+                if (window.RSAStore && window.RSAStore.showNotification) {
+                    window.RSAStore.showNotification('Download link generated! Click to download.', 'success');
+                }
+                
+                // Change button to download link
+                btn.outerHTML = `
+                    <a href="${data.downloadUrl}" 
+                       target="_blank" 
+                       class="btn btn-success"
+                       onclick="trackDownload(${downloadId})">
+                        <i class="fas fa-download"></i>
+                        Download Now
+                    </a>
+                `;
+                
+                // Auto-open download after 1 second
+                setTimeout(() => {
+                    window.open(data.downloadUrl, '_blank');
+                }, 1000);
+            } else {
+                // Show error
+                if (window.RSAStore && window.RSAStore.showNotification) {
+                    window.RSAStore.showNotification(data.error || 'Failed to generate download link', 'error');
+                }
+                
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download"></i> Get Download Link';
+            }
+        } catch (error) {
+            console.error('Download error:', error);
+            
+            if (window.RSAStore && window.RSAStore.showNotification) {
+                window.RSAStore.showNotification('Error: ' + error.message, 'error');
+            }
+            
+            // Re-enable button
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-download"></i> Get Download Link';
+        }
+    }
+    
+    function trackDownload(downloadId) {
+        // Track download click (optional analytics)
+        console.log('Download clicked:', downloadId);
+    }
+    
+    // Define share functions in global scope immediately
+    window.shareToWhatsApp = function() {
+        const title = `<%= (post.title || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ') %>`;
+        const excerpt = `<%= (post.excerpt || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ') %>`;
+        const text = encodeURIComponent(title + '\n\n' + excerpt + '\n\n');
+        const url = encodeURIComponent(window.location.href);
+        window.open('https://wa.me/?text=' + text + url, '_blank');
+    };
+    
+    window.shareToTelegram = function() {
+        const title = `<%= (post.title || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ') %>`;
+        const text = encodeURIComponent(title);
+        const url = encodeURIComponent(window.location.href);
+        window.open('https://t.me/share/url?url=' + url + '&text=' + text, '_blank');
+    };
+    
+    window.copyLinkToClipboard = function() {
+        console.log('copyLinkToClipboard() called');
+        const url = window.location.href;
+        const btn = document.getElementById('copyLinkBtn');
+        
+        console.log('Copying URL:', url);
+        console.log('Navigator clipboard available:', !!navigator.clipboard);
+        console.log('Secure context:', window.isSecureContext);
+        
+        // Method 1: Modern Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            console.log('Using Clipboard API');
+            navigator.clipboard.writeText(url)
+                .then(function() {
+                    console.log('✅ Copy successful!');
+                    showCopySuccess(btn);
+                })
+                .catch(function(err) {
+                    console.error('❌ Clipboard API failed:', err);
+                    fallbackCopyLink(url, btn);
+                });
+        } 
+        // Method 2: Fallback
+        else {
+            console.log('Using fallback method');
+            fallbackCopyLink(url, btn);
+        }
+    };
+    
+    function fallbackCopyLink(text, btn) {
+        console.log('Fallback copy method started');
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '0';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        
+        try {
+            textArea.focus();
+            textArea.select();
+            textArea.setSelectionRange(0, 99999); // For mobile
+            
+            const successful = document.execCommand('copy');
+            console.log('execCommand result:', successful);
+            
+            if (successful) {
+                showCopySuccess(btn);
+            } else {
+                console.error('❌ execCommand returned false');
+                showNotification('Failed to copy link', 'error');
+            }
+        } catch (err) {
+            console.error('❌ execCommand exception:', err);
+            showNotification('Error copying link', 'error');
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+    
+    function showCopySuccess(btn) {
+        console.log('✅ Showing success notification');
+        showNotification('Link copied to clipboard!', 'success');
+        
+        // Change button temporarily
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.style.background = '#10b981';
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+        }, 2000);
+    }
+    
+    function showNotification(message, type) {
+        console.log('showNotification:', message, type);
+        
+        // Remove existing notification
+        const existing = document.querySelector('.custom-notification');
+        if (existing) existing.remove();
+        
+        const notif = document.createElement('div');
+        notif.className = 'custom-notification';
+        notif.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: ${type === 'success' ? '#10b981' : '#ef4444'};
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 99999;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        `;
+        
+        const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>';
+        notif.innerHTML = `${icon} ${message}`;
+        
+        document.body.appendChild(notif);
+        console.log('Notification added to DOM');
+        
+        setTimeout(() => {
+            notif.remove();
+        }, 3000);
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+    
+    // Modal removed - auto-generate token now
+</script>
+
+<%- include('../partials/footer') %>

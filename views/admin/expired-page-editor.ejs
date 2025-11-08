@@ -1,0 +1,419 @@
+<%- include('../partials/admin-header') %>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <div>
+                <h1>
+                    <i class="fas fa-clock"></i>
+                    Expired Link Page
+                </h1>
+                <p>Manage content and FAQs for expired download link page</p>
+            </div>
+        </div>
+
+        <% if (message) { %>
+            <div class="alert alert-<%= message.type %>" style="margin-bottom: 2rem;">
+                <i class="fas fa-<%= message.type === 'success' ? 'check-circle' : 'exclamation-triangle' %>"></i>
+                <%= message.text %>
+            </div>
+        <% } %>
+
+        <!-- Content Editor -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-edit"></i> Page Content</h2>
+            </div>
+            <form method="POST" action="/admin/expired-page/update-content" style="padding: 1.5rem;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                
+                <div class="form-group">
+                    <label class="form-label">Page Title *</label>
+                    <input 
+                        type="text" 
+                        name="title" 
+                        class="form-input" 
+                        value="<%= content.title %>"
+                        required
+                        maxlength="100"
+                        placeholder="e.g. Download Link Has Expired"
+                    >
+                    <p class="form-help">Main title displayed on the expired link page</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Subtitle *</label>
+                    <textarea 
+                        name="subtitle" 
+                        class="form-input" 
+                        rows="2"
+                        required
+                        maxlength="200"
+                        placeholder="Short description below the title"
+                    ><%= content.subtitle %></textarea>
+                    <p class="form-help">Brief description shown below the title</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Main Message *</label>
+                    <textarea 
+                        name="main_message" 
+                        class="form-input" 
+                        rows="3"
+                        required
+                        maxlength="500"
+                        placeholder="Message displayed in alert box"
+                    ><%= content.main_message %></textarea>
+                    <p class="form-help">Message shown in the warning alert box</p>
+                </div>
+
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">CTA Button Text *</label>
+                        <input 
+                            type="text" 
+                            name="cta_text" 
+                            class="form-input" 
+                            value="<%= content.cta_text %>"
+                            required
+                            maxlength="50"
+                            placeholder="e.g. Request New Link"
+                        >
+                        <p class="form-help">Text on "Request New Link" button</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Info Box Title *</label>
+                        <input 
+                            type="text" 
+                            name="info_title" 
+                            class="form-input" 
+                            value="<%= content.info_title %>"
+                            required
+                            maxlength="50"
+                            placeholder="e.g. Important Information"
+                        >
+                        <p class="form-help">Title for information section</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Save Content
+                    </button>
+                    <a href="/expired-link" target="_blank" class="btn btn-secondary">
+                        <i class="fas fa-external-link-alt"></i>
+                        Preview Page
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- FAQ Management -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2><i class="fas fa-question-circle"></i> FAQ Management</h2>
+                <button class="btn btn-primary" onclick="showAddFaqModal()">
+                    <i class="fas fa-plus"></i>
+                    Add FAQ
+                </button>
+            </div>
+
+            <% if (faqs.length === 0) { %>
+                <div style="text-align: center; padding: 4rem 2rem;">
+                    <div style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <h3>No FAQs Yet</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                        Add FAQs to help customers understand expired links
+                    </p>
+                    <button class="btn btn-primary" onclick="showAddFaqModal()">
+                        <i class="fas fa-plus"></i>
+                        Add First FAQ
+                    </button>
+                </div>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Order</th>
+                                <th>Question</th>
+                                <th>Answer</th>
+                                <th style="width: 100px;">Status</th>
+                                <th style="text-align: right; width: 150px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% faqs.forEach(faq => { %>
+                                <tr>
+                                    <td><strong>#<%= faq.sort_order %></strong></td>
+                                    <td><strong><%= faq.question %></strong></td>
+                                    <td><%= faq.answer.substring(0, 100) %><%= faq.answer.length > 100 ? '...' : '' %></td>
+                                    <td>
+                                        <% if (faq.is_active) { %>
+                                            <span class="badge badge-success">Active</span>
+                                        <% } else { %>
+                                            <span class="badge badge-secondary">Hidden</span>
+                                        <% } %>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <button class="btn btn-sm btn-secondary" onclick='editFaq(<%= JSON.stringify(faq) %>)'>
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteFaq(<%= faq.id %>, '<%= faq.question.substring(0, 30).replace(/'/g, "\\'") %>')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </main>
+</div>
+
+<!-- Add/Edit FAQ Modal -->
+<div id="faqModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add FAQ</h2>
+            <button class="modal-close" onclick="closeFaqModal()">&times;</button>
+        </div>
+        <form id="faqForm" onsubmit="saveFaq(event)">
+            <input type="hidden" id="faq_id">
+            
+            <div class="form-group">
+                <label class="form-label">Question *</label>
+                <input 
+                    type="text"
+                    id="question" 
+                    class="form-input" 
+                    required
+                    maxlength="200"
+                    placeholder="e.g. Why do download links expire?"
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Answer *</label>
+                <textarea 
+                    id="answer" 
+                    class="form-input" 
+                    rows="5"
+                    required
+                    maxlength="1000"
+                    placeholder="Detailed answer..."
+                ></textarea>
+                <p class="form-help">Plain text or simple HTML allowed</p>
+            </div>
+
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Sort Order</label>
+                    <input 
+                        type="number" 
+                        id="sort_order" 
+                        class="form-input" 
+                        value="1"
+                        min="1"
+                    >
+                    <p class="form-help">Lower numbers appear first</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="is_active" checked>
+                        <span>Show on expired link page</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeFaqModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Save FAQ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.modal form {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+</style>
+
+<script>
+function showAddFaqModal() {
+    document.getElementById('modalTitle').textContent = 'Add FAQ';
+    document.getElementById('faq_id').value = '';
+    document.getElementById('question').value = '';
+    document.getElementById('answer').value = '';
+    document.getElementById('sort_order').value = '<%= faqs.length + 1 %>';
+    document.getElementById('is_active').checked = true;
+    document.getElementById('faqModal').classList.add('active');
+}
+
+function editFaq(faq) {
+    document.getElementById('modalTitle').textContent = 'Edit FAQ';
+    document.getElementById('faq_id').value = faq.id;
+    document.getElementById('question').value = faq.question;
+    document.getElementById('answer').value = faq.answer;
+    document.getElementById('sort_order').value = faq.sort_order;
+    document.getElementById('is_active').checked = faq.is_active === 1;
+    document.getElementById('faqModal').classList.add('active');
+}
+
+function closeFaqModal() {
+    document.getElementById('faqModal').classList.remove('active');
+}
+
+function saveFaq(event) {
+    event.preventDefault();
+    
+    const faqId = document.getElementById('faq_id').value;
+    const action = faqId ? '/admin/expired-page/faqs/update' : '/admin/expired-page/faqs/create';
+    
+    const formData = new FormData();
+    formData.append('_csrf', '<%= csrfToken %>');
+    if (faqId) formData.append('faq_id', faqId);
+    formData.append('question', document.getElementById('question').value);
+    formData.append('answer', document.getElementById('answer').value);
+    formData.append('sort_order', document.getElementById('sort_order').value);
+    formData.append('is_active', document.getElementById('is_active').checked ? '1' : '0');
+    
+    fetch(action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to save FAQ');
+    });
+}
+
+function deleteFaq(id, question) {
+    if (!confirm(`Are you sure you want to delete FAQ: "${question}"?`)) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('_csrf', '<%= csrfToken %>');
+    formData.append('faq_id', id);
+    
+    fetch('/admin/expired-page/faqs/delete', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to delete FAQ');
+    });
+}
+
+// Close modal when clicking outside
+document.getElementById('faqModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeFaqModal();
+    }
+});
+</script>
+
+<%- include('../partials/admin-footer') %>

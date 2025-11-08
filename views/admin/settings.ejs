@@ -1,0 +1,413 @@
+<%- include('../partials/admin-header') %>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <h1><i class="fas fa-cog"></i> Settings</h1>
+            <p>Configure your store settings</p>
+        </div>
+        
+        <% if (typeof message !== 'undefined' && message) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <%= message %>
+            </div>
+        <% } %>
+        
+        <form method="POST" action="/admin/settings-update" id="settingsForm" enctype="multipart/form-data" onsubmit="debugFormSubmit(event)">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <!-- Store Branding -->
+            <div class="card">
+                <h3><i class="fas fa-palette"></i> Store Branding</h3>
+                
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Upload Logo</label>
+                        <input type="file" id="logo_file" name="logo_file" class="form-input" accept="image/*" onchange="previewLogo(this)">
+                        <p class="form-help">Recommended: 200x50px PNG. Will save when you click Save All Settings.</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Upload Favicon</label>
+                        <input type="file" id="favicon_file" name="favicon_file" class="form-input" accept="image/*" onchange="previewFavicon(this)">
+                        <p class="form-help">Recommended: 32x32px PNG. Will save when you click Save All Settings.</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Logo URL (or upload file above)</label>
+                        <input type="text" name="logo_url" id="logo_url" class="form-input" value="<%= settings.logo_url || '' %>" placeholder="https://..." onchange="updateLogoPreview()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Favicon URL (or upload file above)</label>
+                        <input type="text" name="favicon_url" id="favicon_url" class="form-input" value="<%= settings.favicon_url || '' %>" placeholder="https://..." onchange="updateFaviconPreview()">
+                    </div>
+                </div>
+                
+                <!-- Hidden fields to track old images for deletion and upload markers -->
+                <input type="hidden" name="old_logo_url" value="<%= settings.logo_url || '' %>">
+                <input type="hidden" name="old_favicon_url" value="<%= settings.favicon_url || '' %>">
+                <input type="hidden" name="logo_upload_marker" id="logo_upload_marker" value="">
+                <input type="hidden" name="favicon_upload_marker" id="favicon_upload_marker" value="">
+                
+                <div class="grid grid-2" style="margin-top: 1rem;">
+                    <div>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">Logo Preview:</p>
+                        <div id="logoPreview" style="padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); min-height: 60px; display: flex; align-items: center; justify-content: center;">
+                            <% if (settings.logo_url) { %>
+                                <img src="<%= settings.logo_url %>" alt="Logo" style="max-height: 50px; max-width: 100%;">
+                            <% } else { %>
+                                <span style="color: var(--text-muted);">No logo uploaded</span>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">Favicon Preview:</p>
+                        <div id="faviconPreview" style="padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); min-height: 60px; display: flex; align-items: center; justify-content: center;">
+                            <% if (settings.favicon_url) { %>
+                                <img src="<%= settings.favicon_url %>" alt="Favicon" style="max-height: 32px; max-width: 32px;">
+                            <% } else { %>
+                                <span style="color: var(--text-muted);">No favicon uploaded</span>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Store Information -->
+            <div class="card" style="margin-top: 2rem;">
+                <h3><i class="fas fa-store"></i> Store Information</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Store Name</label>
+                    <input type="text" name="store_name" class="form-input" value="<%= settings.store_name %>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Store Description</label>
+                    <textarea name="store_description" class="form-textarea" rows="3"><%= settings.store_description %></textarea>
+                </div>
+                
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label">WhatsApp Number</label>
+                        <input type="tel" name="store_whatsapp" class="form-input" value="<%= settings.store_whatsapp %>" placeholder="6281234567890">
+                        <p class="form-help">Format: 628xxxxxxxxxx</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="store_email" class="form-input" value="<%= settings.store_email %>">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Telegram Username</label>
+                    <input type="text" name="store_telegram" class="form-input" value="<%= settings.store_telegram %>" placeholder="@YourStore">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Operating Hours - Weekday</label>
+                    <input type="text" name="operating_hours_weekday" class="form-input" value="<%= settings.operating_hours_weekday %>" placeholder="Senin - Jumat: 09:00 - 21:00 WIB">
+                    <p class="form-help">Jam operasional hari kerja</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Operating Hours - Weekend</label>
+                    <input type="text" name="operating_hours_weekend" class="form-input" value="<%= settings.operating_hours_weekend %>" placeholder="Sabtu - Minggu: 10:00 - 18:00 WIB">
+                    <p class="form-help">Jam operasional akhir pekan</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Operating Hours - Support</label>
+                    <input type="text" name="operating_hours_support" class="form-input" value="<%= settings.operating_hours_support %>" placeholder="Support Email: 24/7">
+                    <p class="form-help">Info support 24/7</p>
+                </div>
+            </div>
+            
+            <!-- QRIS Configuration -->
+            <div class="card" style="margin-top: 2rem;">
+                <h3><i class="fas fa-qrcode"></i> QRIS Payment Configuration</h3>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Penting:</strong> QRIS Base String adalah QRIS statis Anda tanpa nominal dan CRC (10 karakter terakhir).
+                    <a href="#qris-help" style="color: var(--primary); text-decoration: underline;">Cara mendapatkan →</a>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">QRIS Merchant Name (NMID)</label>
+                    <input type="text" name="qris_merchant_name" class="form-input" value="<%= settings.qris_merchant_name %>" required>
+                    <p class="form-help">Nama yang muncul saat scan QRIS</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">QRIS Base String</label>
+                    <textarea name="qris_base_string" class="form-textarea" rows="4" style="font-family: monospace; font-size: 0.875rem;"><%= settings.qris_base_string %></textarea>
+                    <p class="form-help">String QRIS tanpa nominal dan CRC (hapus 10 karakter terakhir)</p>
+                </div>
+            </div>
+            
+            <!-- SMTP Configuration -->
+            <div class="card" style="margin-top: 2rem;">
+                <h3><i class="fas fa-envelope"></i> Email (SMTP) Configuration</h3>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="smtp_active" value="1" <%= settings.smtp_active === '1' ? 'checked' : '' %>>
+                        <span>Enable Email Notifications</span>
+                    </label>
+                </div>
+                
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label">SMTP Host</label>
+                        <input type="text" name="smtp_host" class="form-input" value="<%= settings.smtp_host %>" placeholder="smtp.gmail.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">SMTP Port</label>
+                        <input type="number" name="smtp_port" class="form-input" value="<%= settings.smtp_port %>" placeholder="587">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">SMTP Username (Email)</label>
+                    <input type="email" name="smtp_username" class="form-input" value="<%= settings.smtp_username %>">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">SMTP Password (App Password)</label>
+                    <input type="password" name="smtp_password" class="form-input" value="<%= settings.smtp_password %>" placeholder="••••••••••••••••">
+                    <p class="form-help">
+                        <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: var(--primary);">
+                            Generate Gmail App Password →
+                        </a>
+                    </p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">From Name</label>
+                    <input type="text" name="smtp_from_name" class="form-input" value="<%= settings.smtp_from_name %>">
+                </div>
+            </div>
+            
+            <!-- Webhook Configuration -->
+            <div class="card" style="margin-top: 2rem;">
+                <h3><i class="fas fa-webhook"></i> Webhook Configuration</h3>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Security:</strong> API Key digunakan untuk verifikasi webhook dari notification listener. Jangan share ke publik!
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Webhook API Key</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" name="webhook_api_key" id="webhookKey" class="form-input" value="<%= settings.webhook_api_key %>" style="flex: 1; font-family: monospace;">
+                        <button type="button" onclick="generateWebhookKey()" class="btn btn-secondary">
+                            <i class="fas fa-sync"></i>
+                        </button>
+                    </div>
+                    <p class="form-help">Digunakan di header: x-api-key</p>
+                </div>
+                
+                <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-lg); margin-top: 1rem;">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: 600;">Webhook Endpoint:</p>
+                    <code style="background: var(--bg-primary); padding: 0.5rem 1rem; border-radius: var(--radius-sm); display: block; font-size: 0.875rem;">
+                        POST <%= process.env.YOUR_SERVER_URL || 'https://store.araii.id' %>/webhook/payment
+                    </code>
+                </div>
+            </div>
+            
+            <!-- Download Token Configuration -->
+            <div class="card" style="margin-top: 2rem;">
+                <h3><i class="fas fa-key"></i> Download Token Settings</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Token Expiry Time (Minutes)</label>
+                    <input type="number" name="token_expiry_minutes" class="form-input" value="<%= settings.token_expiry_minutes %>" min="5" max="1440">
+                    <p class="form-help">Lama waktu link download berlaku (5-1440 menit / 24 jam)</p>
+                </div>
+            </div>
+            
+            <!-- Save Button -->
+            <div style="margin-top: 2rem; text-align: center;">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i>
+                    Save All Settings
+                </button>
+            </div>
+        </form>
+        
+        <!-- QRIS Help Section -->
+        <div class="card" style="margin-top: 2rem; background: var(--bg-tertiary);" id="qris-help">
+            <h3><i class="fas fa-question-circle"></i> Cara Mendapatkan QRIS Base String</h3>
+            
+            <div style="margin-top: 1.5rem;">
+                <h4>Metode 1: Dari E-Wallet App</h4>
+                <ol style="line-height: 1.8; color: var(--text-secondary);">
+                    <li>Buka aplikasi DANA/OVO/GoPay</li>
+                    <li>Pilih menu "Terima" → "QRIS"</li>
+                    <li>Screenshot atau simpan QR Code</li>
+                    <li>Scan QR tersebut dengan QR scanner</li>
+                    <li>Copy string yang muncul (panjang, contoh: 00020101021...)</li>
+                    <li><strong>PENTING:</strong> Hapus 10 karakter terakhir (6304 + 4 digit CRC)</li>
+                    <li>Paste ke field "QRIS Base String" di atas</li>
+                </ol>
+                
+                <div class="alert alert-info" style="margin-top: 1rem;">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>Contoh:</strong><br>
+                    QRIS Lengkap: <code>...610555161<strong style="color: var(--error);">63045678</strong></code><br>
+                    Base String: <code>...610555161</code> (hapus 6304 + CRC)
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function debugFormSubmit(event) {
+        console.log('=== FORM SUBMIT DEBUG ===');
+        const form = event.target;
+        const formData = new FormData(form);
+        
+        console.log('Form action:', form.action);
+        console.log('Form method:', form.method);
+        console.log('\nForm data:');
+        
+        for (let [key, value] of formData.entries()) {
+            if (key.includes('password')) {
+                console.log(`  ${key}: ***hidden***`);
+            } else {
+                console.log(`  ${key}: ${value}`);
+            }
+        }
+        
+        console.log('\nTotal fields:', formData.entries().toArray().length);
+        console.log('========================');
+        
+        // Let form submit normally
+        return true;
+    }
+    
+    function generateWebhookKey() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let key = 'RSAStore_';
+        for (let i = 0; i < 32; i++) {
+            key += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById('webhookKey').value = key;
+        RSAStore.showNotification('New webhook key generated!', 'success');
+    }
+</script>
+
+<script>
+    function previewLogo(input) {
+        const file = input.files[0];
+        if (!file) {
+            // Clear marker if no file
+            document.getElementById('logo_upload_marker').value = '';
+            return;
+        }
+        
+        // Validate file size (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            RSAStore.showNotification('Logo size must be less than 10MB', 'error');
+            input.value = '';
+            document.getElementById('logo_upload_marker').value = '';
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('logoPreview');
+            preview.innerHTML = `<img src="${e.target.result}" alt="Logo" style="max-height: 50px; max-width: 100%;">`;
+            
+            // Set marker to indicate file upload (hidden field)
+            document.getElementById('logo_upload_marker').value = '1';
+            
+            // Clear logo_url field when uploading new file
+            document.getElementById('logo_url').value = '';
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    function previewFavicon(input) {
+        const file = input.files[0];
+        if (!file) {
+            // Clear marker if no file
+            document.getElementById('favicon_upload_marker').value = '';
+            return;
+        }
+        
+        // Validate file size (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            RSAStore.showNotification('Favicon size must be less than 10MB', 'error');
+            input.value = '';
+            document.getElementById('favicon_upload_marker').value = '';
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('faviconPreview');
+            preview.innerHTML = `<img src="${e.target.result}" alt="Favicon" style="max-height: 32px; max-width: 32px;">`;
+            
+            // Set marker to indicate file upload (hidden field)
+            document.getElementById('favicon_upload_marker').value = '1';
+            
+            // Clear favicon_url field when uploading new file
+            document.getElementById('favicon_url').value = '';
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // Clear file inputs and markers when user enters URLs
+    document.getElementById('logo_url')?.addEventListener('input', function() {
+        if (this.value && this.value.trim() !== '') {
+            document.getElementById('logo_file').value = '';
+            document.getElementById('logo_upload_marker').value = '';
+        }
+    });
+    
+    document.getElementById('favicon_url')?.addEventListener('input', function() {
+        if (this.value && this.value.trim() !== '') {
+            document.getElementById('favicon_file').value = '';
+            document.getElementById('favicon_upload_marker').value = '';
+        }
+    });
+    
+    function updateLogoPreview() {
+        const logoUrl = document.getElementById('logo_url').value;
+        const preview = document.getElementById('logoPreview');
+        
+        if (logoUrl) {
+            preview.innerHTML = `<img src="${logoUrl}" alt="Logo" style="max-height: 50px; max-width: 100%;">`;
+        } else {
+            preview.innerHTML = '<span style="color: var(--text-muted);">No logo uploaded</span>';
+        }
+    }
+    
+    function updateFaviconPreview() {
+        const faviconUrl = document.getElementById('favicon_url').value;
+        const preview = document.getElementById('faviconPreview');
+        
+        if (faviconUrl) {
+            preview.innerHTML = `<img src="${faviconUrl}" alt="Favicon" style="max-height: 32px; max-width: 32px;">`;
+        } else {
+            preview.innerHTML = '<span style="color: var(--text-muted);">No favicon uploaded</span>';
+        }
+    }
+</script>
+
+</body>
+</html>

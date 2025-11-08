@@ -1,0 +1,211 @@
+<%- include('../partials/admin-header') %>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1><i class="fas fa-tags"></i> Categories</h1>
+                    <p>Organize your products with categories</p>
+                </div>
+                <button onclick="showAddCategory()" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Add Category
+                </button>
+            </div>
+        </div>
+        
+        <% if (categories && categories.length > 0) { %>
+            <div class="grid grid-2">
+                <% categories.forEach(category => { %>
+                    <div class="card">
+                        <div style="display: flex; justify-content: between; align-items: start; gap: 1rem;">
+                            <div style="font-size: 3rem; flex-shrink: 0;">
+                                <%= category.icon || '📦' %>
+                            </div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 0.5rem 0;"><%= category.name %></h3>
+                                <% if (category.description) { %>
+                                    <p style="margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.875rem;">
+                                        <%= category.description %>
+                                    </p>
+                                <% } %>
+                                <div style="display: flex; align-items: center; gap: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+                                    <span><i class="fas fa-box"></i> <%= category.product_count %> products</span>
+                                    <span><i class="fas fa-shopping-cart"></i> <%= category.order_count || 0 %> orders</span>
+                                    <span><i class="fas fa-sort"></i> Order: <%= category.sort_order %></span>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <button onclick="editCategory(<%= category.id %>, '<%= category.name %>', '<%= category.description || '' %>', '<%= category.icon %>', <%= category.sort_order %>)" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteCategory(<%= category.id %>, '<%= category.name %>')" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="card" style="text-align: center; padding: 4rem 2rem;">
+                <div style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <h3>No Categories</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                    Create your first category to organize products
+                </p>
+                <button onclick="showAddCategory()" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Add Category
+                </button>
+            </div>
+        <% } %>
+    </main>
+</div>
+
+<!-- Category Modal -->
+<div id="categoryModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 500px; width: 90%; margin: 2rem;">
+        <h3 id="modalTitle"><i class="fas fa-plus"></i> Add Category</h3>
+        
+        <form id="categoryForm" onsubmit="submitCategory(event)">
+            <input type="hidden" id="categoryId">
+            
+            <div class="form-group">
+                <label class="form-label">Category Name *</label>
+                <input type="text" id="categoryName" class="form-input" placeholder="E-Book" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea id="categoryDescription" class="form-input" rows="3" placeholder="Category description..."></textarea>
+            </div>
+            
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label class="form-label">Icon (Emoji)</label>
+                    <input type="text" id="categoryIcon" class="form-input" placeholder="📚" maxlength="2">
+                    <p class="form-help">Single emoji character</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Sort Order</label>
+                    <input type="number" id="categorySortOrder" class="form-input" value="0" min="0">
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;" id="submitBtn">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+                <button type="button" onclick="closeModal()" class="btn btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let editMode = false;
+    
+    function showAddCategory() {
+        editMode = false;
+        document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Category';
+        document.getElementById('categoryId').value = '';
+        document.getElementById('categoryName').value = '';
+        document.getElementById('categoryDescription').value = '';
+        document.getElementById('categoryIcon').value = '📦';
+        document.getElementById('categorySortOrder').value = '0';
+        document.getElementById('categoryModal').style.display = 'flex';
+    }
+    
+    function editCategory(id, name, description, icon, sortOrder) {
+        editMode = true;
+        document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Category';
+        document.getElementById('categoryId').value = id;
+        document.getElementById('categoryName').value = name;
+        document.getElementById('categoryDescription').value = description;
+        document.getElementById('categoryIcon').value = icon;
+        document.getElementById('categorySortOrder').value = sortOrder;
+        document.getElementById('categoryModal').style.display = 'flex';
+    }
+    
+    function closeModal() {
+        document.getElementById('categoryModal').style.display = 'none';
+    }
+    
+    async function submitCategory(e) {
+        e.preventDefault();
+        
+        const id = document.getElementById('categoryId').value;
+        const name = document.getElementById('categoryName').value;
+        const description = document.getElementById('categoryDescription').value;
+        const icon = document.getElementById('categoryIcon').value;
+        const sort_order = document.getElementById('categorySortOrder').value;
+        
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        try {
+            const url = editMode ? `/admin/products/categories/edit/${id}` : '/admin/products/categories/create';
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description, icon, sort_order })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                RSAStore.showNotification('Category saved!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                RSAStore.showNotification(data.error || 'Failed to save', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+            }
+        } catch (error) {
+            RSAStore.showNotification('Error: ' + error.message, 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Save';
+        }
+    }
+    
+    async function deleteCategory(id, name) {
+        if (!confirm(`Delete category "${name}"?`)) {
+            return;
+        }
+        
+        try {
+            const formData = new FormData();
+            formData.append('_csrf', '<%= csrfToken %>');
+            
+            const response = await fetch(`/admin/products/categories/delete/${id}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                RSAStore.showNotification('Category deleted', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                RSAStore.showNotification(data.error || 'Failed to delete', 'error');
+            }
+        } catch (error) {
+            RSAStore.showNotification('Error: ' + error.message, 'error');
+        }
+    }
+</script>
+
+</body>
+</html>

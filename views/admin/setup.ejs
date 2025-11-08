@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First-Time Setup - <%= settings.store_name %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        .setup-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .setup-box {
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .setup-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .setup-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2.5rem;
+            color: white;
+        }
+        
+        .password-strength {
+            height: 4px;
+            background: var(--border-color);
+            border-radius: var(--radius-full);
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s ease;
+            border-radius: var(--radius-full);
+        }
+        
+        .strength-weak { width: 33%; background: var(--error); }
+        .strength-medium { width: 66%; background: var(--warning); }
+        .strength-strong { width: 100%; background: var(--success); }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-box">
+            <div class="setup-header">
+                <div class="setup-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h1>Selamat Datang di RSA Store!</h1>
+                <p style="color: var(--text-secondary);">Mari kita setup akun admin Anda</p>
+            </div>
+            
+            <div class="card">
+                <% if (error) { %>
+                    <div class="alert alert-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <%= error %>
+                    </div>
+                <% } %>
+                
+                <form method="POST" action="/admin/setup" id="setupForm">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-user"></i>
+                            Username
+                        </label>
+                        <input 
+                            type="text" 
+                            name="username" 
+                            class="form-input" 
+                            placeholder="username" 
+                            required
+                            minlength="3"
+                            pattern="[a-zA-Z0-9_]+"
+                            title="Username hanya boleh berisi huruf, angka, dan underscore"
+                        >
+                        <p class="form-help">Min. 3 karakter, hanya huruf, angka, dan underscore</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-envelope"></i>
+                            Email (Opsional)
+                        </label>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            class="form-input" 
+                            placeholder="admin@example.com"
+                        >
+                        <p class="form-help">Untuk recovery dan notifikasi</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-lock"></i>
+                            Password
+                        </label>
+                        <div style="position: relative;">
+                            <input 
+                                type="password" 
+                                name="password" 
+                                id="password"
+                                class="form-input" 
+                                placeholder="••••••••" 
+                                required
+                                minlength="8"
+                            >
+                            <button 
+                                type="button" 
+                                onclick="togglePassword('password')"
+                                style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer;"
+                            >
+                                <i class="fas fa-eye" id="password-eye"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength">
+                            <div class="password-strength-bar" id="strengthBar"></div>
+                        </div>
+                        <p class="form-help" id="strengthText">Min. 8 karakter, gunakan kombinasi huruf, angka, dan simbol</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-lock"></i>
+                            Konfirmasi Password
+                        </label>
+                        <div style="position: relative;">
+                            <input 
+                                type="password" 
+                                name="confirm_password" 
+                                id="confirm_password"
+                                class="form-input" 
+                                placeholder="••••••••" 
+                                required
+                            >
+                            <button 
+                                type="button" 
+                                onclick="togglePassword('confirm_password')"
+                                style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer;"
+                            >
+                                <i class="fas fa-eye" id="confirm_password-eye"></i>
+                            </button>
+                        </div>
+                        <p class="form-help" id="matchText"></p>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-check"></i>
+                        Selesaikan Setup
+                    </button>
+                </form>
+                
+                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.875rem; margin: 0;">
+                        <i class="fas fa-shield-alt"></i>
+                        Password Anda akan dienkripsi dengan bcrypt
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + '-eye');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        // Password strength checker
+        const passwordInput = document.getElementById('password');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+            
+            strengthBar.className = 'password-strength-bar';
+            
+            if (strength === 0 || strength === 1) {
+                strengthBar.classList.add('strength-weak');
+                strengthText.textContent = 'Password terlalu lemah';
+                strengthText.style.color = 'var(--error)';
+            } else if (strength === 2 || strength === 3) {
+                strengthBar.classList.add('strength-medium');
+                strengthText.textContent = 'Password cukup kuat';
+                strengthText.style.color = 'var(--warning)';
+            } else {
+                strengthBar.classList.add('strength-strong');
+                strengthText.textContent = 'Password sangat kuat!';
+                strengthText.style.color = 'var(--success)';
+            }
+        });
+        
+        // Password match checker
+        const confirmInput = document.getElementById('confirm_password');
+        const matchText = document.getElementById('matchText');
+        
+        function checkPasswordMatch() {
+            if (confirmInput.value.length === 0) {
+                matchText.textContent = '';
+                return;
+            }
+            
+            if (passwordInput.value === confirmInput.value) {
+                matchText.textContent = '✓ Password cocok';
+                matchText.style.color = 'var(--success)';
+            } else {
+                matchText.textContent = '✗ Password tidak cocok';
+                matchText.style.color = 'var(--error)';
+            }
+        }
+        
+        passwordInput.addEventListener('input', checkPasswordMatch);
+        confirmInput.addEventListener('input', checkPasswordMatch);
+    </script>
+</body>
+</html>

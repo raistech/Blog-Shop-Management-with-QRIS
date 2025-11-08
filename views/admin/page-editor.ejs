@@ -1,0 +1,238 @@
+<%- include('../partials/admin-header') %>
+
+<!-- Quill Rich Text Editor -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>
+                        <i class="fas fa-<%= page ? 'edit' : 'plus' %>"></i>
+                        <%= page ? 'Edit Page' : 'Create New Page' %>
+                    </h1>
+                    <p><%= page ? 'Update page content' : 'Create a new information page' %></p>
+                </div>
+                <a href="/admin/pages" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Pages
+                </a>
+            </div>
+        </div>
+        
+        <form method="POST" action="<%= page ? `/admin/pages/edit/${page.id}` : '/admin/pages/create' %>">
+            <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+                <!-- Main Content -->
+                <div>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">Page Title *</label>
+                            <input 
+                                type="text"
+                                name="title"
+                                id="pageTitle" 
+                                class="form-input" 
+                                placeholder="e.g. About Us"
+                                value="<%= page ? page.title : '' %>"
+                                required
+                            >
+                        </div>
+                        
+                        <% if (page) { %>
+                            <div class="form-group">
+                                <label class="form-label">URL Slug</label>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="color: var(--text-muted);">/page/</span>
+                                    <code style="color: var(--primary);"><%= page.slug %></code>
+                                </div>
+                                <p class="form-help">Slug generated automatically from title</p>
+                            </div>
+                        <% } %>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Content *</label>
+                            <div id="editor" style="background: var(--bg-secondary); min-height: 400px;"></div>
+                            <textarea name="content" id="pageContent" style="display: none;" required><%= page ? page.content : '' %></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sidebar -->
+                <div>
+                    <div class="card">
+                        <h3><i class="fas fa-cog"></i> Page Settings</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md);">
+                                <input type="checkbox" name="is_active" value="1" <%= page && page.is_active ? 'checked' : (page ? '' : 'checked') %>>
+                                <div>
+                                    <div style="font-weight: 600;">Published</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Make page visible to public</div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
+                            <i class="fas fa-save"></i>
+                            <%= page ? 'Update Page' : 'Create Page' %>
+                        </button>
+                        
+                        <% if (page) { %>
+                            <a href="/page/<%= page.slug %>" target="_blank" class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;">
+                                <i class="fas fa-external-link-alt"></i>
+                                View Page
+                            </a>
+                        <% } %>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 1rem; background: rgba(96, 165, 250, 0.1); border-color: var(--info);">
+                        <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-info-circle"></i> Tips</h4>
+                        <ul style="font-size: 0.875rem; color: var(--text-secondary); margin-left: 1.5rem;">
+                            <li>Use clear, concise titles</li>
+                            <li>Structure content with headings</li>
+                            <li>Keep paragraphs short</li>
+                            <li>Add links for more info</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+</div>
+
+<style>
+/* Quill Dark Theme */
+.ql-toolbar.ql-snow {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.ql-container.ql-snow {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    color: var(--text-primary);
+}
+
+.ql-editor {
+    min-height: 400px;
+    color: var(--text-primary);
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.ql-editor.ql-blank::before {
+    color: var(--text-muted);
+}
+
+.ql-editor h2 {
+    color: var(--primary);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.ql-editor h3 {
+    color: var(--primary-light);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.ql-editor a {
+    color: var(--primary);
+}
+
+.ql-snow .ql-stroke {
+    stroke: var(--text-secondary);
+}
+
+.ql-snow .ql-fill {
+    fill: var(--text-secondary);
+}
+
+.ql-snow .ql-picker-label {
+    color: var(--text-secondary);
+}
+
+.ql-snow .ql-picker-options {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.ql-snow .ql-picker-item {
+    color: var(--text-primary);
+}
+
+.ql-snow .ql-picker-item:hover {
+    background: var(--bg-hover);
+}
+
+.ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-label {
+    border-color: var(--border-color);
+}
+
+.ql-toolbar.ql-snow button:hover,
+.ql-toolbar.ql-snow button:focus,
+.ql-toolbar.ql-snow button.ql-active {
+    color: var(--primary);
+}
+
+.ql-toolbar.ql-snow button:hover .ql-stroke,
+.ql-toolbar.ql-snow button:focus .ql-stroke,
+.ql-toolbar.ql-snow button.ql-active .ql-stroke {
+    stroke: var(--primary);
+}
+
+.ql-toolbar.ql-snow button:hover .ql-fill,
+.ql-toolbar.ql-snow button:focus .ql-fill,
+.ql-toolbar.ql-snow button.ql-active .ql-fill {
+    fill: var(--primary);
+}
+</style>
+
+<script>
+// Initialize Quill editor
+const quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Write your page content here...',
+    modules: {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'align': [] }],
+            ['link'],
+            ['blockquote', 'code-block'],
+            ['clean']
+        ]
+    }
+});
+
+// Set initial content
+const initialContent = document.getElementById('pageContent').value;
+if (initialContent) {
+    quill.root.innerHTML = initialContent;
+}
+
+// Sync Quill content to hidden textarea on form submit
+const form = document.querySelector('form');
+form.addEventListener('submit', function(e) {
+    document.getElementById('pageContent').value = quill.root.innerHTML;
+});
+
+// Also sync on Quill text change
+quill.on('text-change', function() {
+    document.getElementById('pageContent').value = quill.root.innerHTML;
+});
+
+console.log('Quill editor initialized for pages');
+</script>
+
+<%- include('../partials/admin-footer') %>

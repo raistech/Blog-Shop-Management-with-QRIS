@@ -1,0 +1,525 @@
+<%- include('../partials/admin-header') %>
+
+<!-- Quill Rich Text Editor -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>
+                        <i class="fas fa-<%= post ? 'edit' : 'plus' %>"></i>
+                        <%= post ? 'Edit Post' : 'Create New Post' %>
+                    </h1>
+                    <p><%= post ? 'Update your blog post' : 'Write and publish a new blog post' %></p>
+                </div>
+                <a href="/admin/blog/posts" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Posts
+                </a>
+            </div>
+        </div>
+        
+        <form id="postForm" method="POST" action="<%= post ? `/admin/blog/posts/edit/${post.id}` : '/admin/blog/posts/create' %>" enctype="multipart/form-data">
+            <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+                <!-- Main Content -->
+                <div>
+                    <div class="card">
+                        <div class="form-group">
+                            <label class="form-label">Title</label>
+                            <input 
+                                type="text"
+                                name="title"
+                                id="title" 
+                                class="form-input" 
+                                placeholder="Post title..."
+                                value="<%= post ? post.title : '' %>"
+                                required
+                            >
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Excerpt (Optional)</label>
+                            <textarea
+                                name="excerpt" 
+                                id="excerpt" 
+                                class="form-input" 
+                                rows="3"
+                                placeholder="Short description for preview..."
+                            ><%= post ? post.excerpt || '' : '' %></textarea>
+                            <p class="form-help">Akan muncul di listing blog. Maks. 200 karakter.</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Content</label>
+                            <div id="editor" style="background: var(--bg-secondary); color: var(--text-primary); min-height: 400px;"></div>
+                            <textarea name="content" id="content" style="display: none;" required><%= post ? post.content : '' %></textarea>
+                            <p class="form-help">Rich text editor dengan toolbar lengkap</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Downloads Section (Edit Mode Only) -->
+                    <% if (post) { %>
+                        <div class="card" style="margin-top: 2rem;">
+                            <h3><i class="fas fa-download"></i> Download Files</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                                Tambahkan file download untuk post ini. File akan terproteksi token.
+                            </p>
+                            
+                            <div id="downloadsList">
+                                <% if (downloads && downloads.length > 0) { %>
+                                    <% downloads.forEach(download => { %>
+                                        <div class="card" style="background: var(--bg-tertiary); margin-bottom: 1rem;">
+                                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                                <div>
+                                                    <h4 style="margin: 0 0 0.5rem 0;"><%= download.title %></h4>
+                                                    <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted); word-break: break-all;">
+                                                        <%= download.file_url %>
+                                                    </p>
+                                                    <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted);">
+                                                        <span><i class="fas fa-download"></i> <%= download.download_count %> downloads</span>
+                                                        <% if (download.requires_token) { %>
+                                                            <span style="margin-left: 1rem; color: var(--primary);"><i class="fas fa-shield-alt"></i> Protected</span>
+                                                        <% } %>
+                                                    </div>
+                                                </div>
+                                                <button type="button" onclick="deleteDownload(<%= download.id %>)" class="btn btn-danger btn-sm">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <p style="text-align: center; color: var(--text-muted); padding: 2rem;">No downloads yet</p>
+                                <% } %>
+                            </div>
+                            
+                            <button type="button" onclick="showAddDownload()" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">
+                                <i class="fas fa-plus"></i>
+                                Add Download
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <!-- Sidebar -->
+                <div>
+                    <div class="card">
+                        <h3><i class="fas fa-cog"></i> Post Settings</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select name="category_id" id="category_id" class="form-select">
+                                <option value="">Uncategorized</option>
+                                <% if (typeof categories !== 'undefined' && categories) { %>
+                                    <% categories.forEach(category => { %>
+                                        <option value="<%= category.id %>" <%= post && post.category_id === category.id ? 'selected' : '' %>>
+                                            <%= category.name %>
+                                        </option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="draft" <%= post && post.status === 'draft' ? 'selected' : '' %>>Draft</option>
+                                <option value="published" <%= post && post.status === 'published' ? 'selected' : '' %>>Published</option>
+                            </select>
+                            <p class="form-help">Draft tidak akan terlihat di public blog</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Upload Featured Image</label>
+                            <input 
+                                type="file" 
+                                id="featured_image_file"
+                                name="featured_image_file"
+                                class="form-input" 
+                                accept="image/*"
+                                onchange="previewFeaturedImage(this)"
+                            >
+                            <p class="form-help">JPG, PNG, GIF, WebP - Max 10MB. Will save when you click Save.</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 1rem 0; color: var(--text-muted);">
+                            <strong>OR</strong>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Featured Image URL</label>
+                            <input 
+                                type="url"
+                                name="featured_image" 
+                                id="featured_image" 
+                                class="form-input" 
+                                placeholder="https://example.com/image.jpg"
+                                value="<%= post ? post.featured_image || '' : '' %>"
+                                onchange="updateFeaturedImagePreview()"
+                            >
+                            <p class="form-help">Or paste external URL</p>
+                        </div>
+                        
+                        <div id="featuredImagePreview" style="margin-top: 1rem;">
+                            <% if (post && post.featured_image) { %>
+                                <img src="<%= post.featured_image %>" alt="Preview" style="width: 100%; border-radius: var(--radius-md);">
+                            <% } else { %>
+                                <div style="width: 100%; aspect-ratio: 16/9; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                                    <i class="fas fa-image" style="font-size: 3rem;"></i>
+                                </div>
+                            <% } %>
+                        </div>
+                        
+                        <!-- Hidden fields -->
+                        <input type="hidden" name="old_featured_image" value="<%= post ? post.featured_image || '' : '' %>">
+                        <input type="hidden" name="featured_image_marker" id="featured_image_marker" value="">
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" id="submitBtn">
+                            <i class="fas fa-save"></i>
+                            <%= post ? 'Update Post' : 'Create Post' %>
+                        </button>
+                        
+                        <% if (post) { %>
+                            <a href="/blog/<%= post.slug %>" target="_blank" class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;">
+                                <i class="fas fa-external-link-alt"></i>
+                                View Post
+                            </a>
+                        <% } %>
+                    </div>
+                    
+                    <% if (post) { %>
+                        <div class="card" style="margin-top: 1rem; background: var(--bg-tertiary);">
+                            <h4><i class="fas fa-chart-line"></i> Statistics</h4>
+                            <div style="margin-top: 1rem;">
+                                <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                                    <span style="color: var(--text-muted);">Views</span>
+                                    <strong style="float: right;"><%= post.views %></strong>
+                                </div>
+                                <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                                    <span style="color: var(--text-muted);">Created</span>
+                                    <strong style="float: right;"><%= formatDateWIB(post.created_at, { day: '2-digit', month: 'short' }) %></strong>
+                                </div>
+                                <div style="padding: 0.75rem 0;">
+                                    <span style="color: var(--text-muted);">Last Updated</span>
+                                    <strong style="float: right;"><%= formatDateWIB(post.updated_at, { day: '2-digit', month: 'short' }) %></strong>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </form>
+    </main>
+</div>
+
+<!-- Add Download Modal -->
+<div id="addDownloadModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 600px; width: 90%; margin: 2rem;">
+        <h3><i class="fas fa-plus"></i> Add Download File</h3>
+        
+        <div class="form-group">
+            <label class="form-label">File Title</label>
+            <input type="text" id="downloadTitle" class="form-input" placeholder="e.g. Template PSD, Source Code, etc">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">File URL</label>
+            <input type="url" id="downloadUrl" class="form-input" placeholder="https://drive.google.com/... or direct link">
+            <p class="form-help">Google Drive, Dropbox, atau direct download link</p>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">File Size (MB) - Optional</label>
+            <input type="number" id="downloadSize" class="form-input" placeholder="10">
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="requiresToken" checked>
+                <span>Enable token protection (Recommended)</span>
+            </label>
+            <p class="form-help">User akan mendapatkan unique download link yang ter-tokenize dan expired 24 jam</p>
+        </div>
+        
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="submitDownload()" class="btn btn-primary" style="flex: 1;">
+                <i class="fas fa-save"></i>
+                Add Download
+            </button>
+            <button onclick="closeDownloadModal()" class="btn btn-secondary">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- SimpleMDE Markdown Editor CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+
+<!-- SimpleMDE Markdown Editor JS -->
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+
+<!-- Post Editor Functions -->
+<style>
+/* Quill Dark Theme */
+.ql-toolbar.ql-snow {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.ql-container.ql-snow {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    color: var(--text-primary);
+}
+
+.ql-editor {
+    min-height: 400px;
+    color: var(--text-primary);
+}
+
+.ql-editor.ql-blank::before {
+    color: var(--text-muted);
+}
+
+.ql-snow .ql-stroke {
+    stroke: var(--text-secondary);
+}
+
+.ql-snow .ql-fill {
+    fill: var(--text-secondary);
+}
+
+.ql-snow .ql-picker-label {
+    color: var(--text-secondary);
+}
+
+.ql-snow .ql-picker-options {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.ql-snow .ql-picker-item {
+    color: var(--text-primary);
+}
+
+.ql-snow .ql-picker-item:hover {
+    background: var(--bg-hover);
+}
+
+.ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-label {
+    border-color: var(--border-color);
+}
+
+.ql-toolbar.ql-snow button:hover,
+.ql-toolbar.ql-snow button:focus,
+.ql-toolbar.ql-snow button.ql-active {
+    color: var(--primary);
+}
+
+.ql-toolbar.ql-snow button:hover .ql-stroke,
+.ql-toolbar.ql-snow button:focus .ql-stroke,
+.ql-toolbar.ql-snow button.ql-active .ql-stroke {
+    stroke: var(--primary);
+}
+
+.ql-toolbar.ql-snow button:hover .ql-fill,
+.ql-toolbar.ql-snow button:focus .ql-fill,
+.ql-toolbar.ql-snow button.ql-active .ql-fill {
+    fill: var(--primary);
+}
+
+.ql-snow a {
+    color: var(--primary);
+}
+</style>
+
+<script>
+// Initialize Quill editor
+const quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Write your blog post content here...',
+    modules: {
+        toolbar: [
+            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'align': [] }],
+            ['link', 'image', 'video'],
+            ['blockquote', 'code-block'],
+            ['clean']
+        ]
+    }
+});
+
+// Set initial content
+const initialContent = document.getElementById('content').value;
+if (initialContent) {
+    quill.root.innerHTML = initialContent;
+}
+
+// Sync Quill content to hidden textarea on form submit
+document.getElementById('postForm').addEventListener('submit', function() {
+    document.getElementById('content').value = quill.root.innerHTML;
+});
+
+// Also sync on Quill text change
+quill.on('text-change', function() {
+    document.getElementById('content').value = quill.root.innerHTML;
+});
+
+console.log('Quill editor initialized');
+
+// ==================== FEATURED IMAGE UPLOAD ====================
+
+function previewFeaturedImage(input) {
+    const file = input.files[0];
+    if (!file) {
+        // Clear marker if no file
+        document.getElementById('featured_image_marker').value = '';
+        return;
+    }
+    
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        RSAStore.showNotification('Image size must be less than 10MB', 'error');
+        input.value = '';
+        document.getElementById('featured_image_marker').value = '';
+        return;
+    }
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById('featuredImagePreview');
+        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width: 100%; border-radius: var(--radius-md);">`;
+        
+        // Set marker to indicate file upload (hidden field)
+        document.getElementById('featured_image_marker').value = '1';
+        
+        // Clear featured_image URL field when uploading new file
+        document.getElementById('featured_image').value = '';
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateFeaturedImagePreview() {
+    const imageUrl = document.getElementById('featured_image').value;
+    const preview = document.getElementById('featuredImagePreview');
+    
+    if (imageUrl && imageUrl.trim() !== '') {
+        preview.innerHTML = `<img src="${imageUrl}" alt="Preview" style="width: 100%; border-radius: var(--radius-md);">`;
+        
+        // Clear file input when user enters URL
+        document.getElementById('featured_image_file').value = '';
+        document.getElementById('featured_image_marker').value = '';
+    } else {
+        preview.innerHTML = `
+            <div style="width: 100%; aspect-ratio: 16/9; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                <i class="fas fa-image" style="font-size: 3rem;"></i>
+            </div>
+        `;
+    }
+}
+
+// ==================== DOWNLOAD FILES MANAGEMENT ====================
+<% if (post) { %>
+function showAddDownload() {
+    document.getElementById('addDownloadModal').style.display = 'flex';
+    // Clear form
+    document.getElementById('downloadTitle').value = '';
+    document.getElementById('downloadUrl').value = '';
+    document.getElementById('downloadSize').value = '';
+    document.getElementById('requiresToken').checked = true;
+}
+
+function closeDownloadModal() {
+    document.getElementById('addDownloadModal').style.display = 'none';
+}
+
+async function submitDownload() {
+    const title = document.getElementById('downloadTitle').value.trim();
+    const fileUrl = document.getElementById('downloadUrl').value.trim();
+    const fileSize = document.getElementById('downloadSize').value;
+    const requiresToken = document.getElementById('requiresToken').checked;
+    
+    if (!title) {
+        RSAStore.showNotification('Please enter file title', 'error');
+        return;
+    }
+    
+    if (!fileUrl) {
+        RSAStore.showNotification('Please enter file URL', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/blog/posts/<%= post.id %>/downloads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: title,
+                file_url: fileUrl,
+                file_size: fileSize ? parseInt(fileSize) * 1024 * 1024 : null, // Convert MB to bytes
+                requires_token: requiresToken ? 1 : 0
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            RSAStore.showNotification('Download added successfully!', 'success');
+            closeDownloadModal();
+            // Reload page to show new download
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            RSAStore.showNotification(data.error || 'Failed to add download', 'error');
+        }
+    } catch (error) {
+        RSAStore.showNotification('Error: ' + error.message, 'error');
+    }
+}
+
+async function deleteDownload(downloadId) {
+    if (!confirm('Are you sure you want to delete this download?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/blog/posts/downloads/delete/${downloadId}`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            RSAStore.showNotification('Download deleted', 'success');
+            // Reload page to update list
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            RSAStore.showNotification(data.error || 'Failed to delete', 'error');
+        }
+    } catch (error) {
+        RSAStore.showNotification('Error: ' + error.message, 'error');
+    }
+}
+<% } %>
+
+// Close modal when clicking outside
+document.getElementById('addDownloadModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDownloadModal();
+    }
+});
+</script>
+
+<%- include('../partials/admin-footer') %>

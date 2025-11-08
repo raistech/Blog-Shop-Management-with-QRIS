@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <%- include('../partials/admin-header') %>
+    
+    <div class="admin-layout">
+        <%- include('../partials/admin-sidebar') %>
+        
+        <main class="admin-content">
+            <div class="admin-page-header">
+                <h1><i class="fas fa-user-circle"></i> Account Settings</h1>
+                <p>Manage your account security and preferences</p>
+            </div>
+            
+            <% if (error) { %>
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <%= error %>
+                </div>
+            <% } %>
+            
+            <% if (success) { %>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <%= success %>
+                </div>
+            <% } %>
+            
+            <div class="grid grid-2">
+                <!-- Account Information -->
+                <div class="card">
+                    <h3><i class="fas fa-info-circle"></i> Account Information</h3>
+                    <div style="margin-top: 1.5rem;">
+                        <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                            <label style="color: var(--text-muted); font-size: 0.875rem;">Username</label>
+                            <p style="font-weight: 600; margin: 0.25rem 0 0 0;"><%= adminUser.username %></p>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                            <label style="color: var(--text-muted); font-size: 0.875rem;">Email</label>
+                            <p style="font-weight: 600; margin: 0.25rem 0 0 0;">
+                                <%= adminUser.email || 'Not set' %>
+                            </p>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                            <label style="color: var(--text-muted); font-size: 0.875rem;">Account Created</label>
+                            <p style="font-weight: 600; margin: 0.25rem 0 0 0;">
+                                <%= formatDateWIB(adminUser.created_at, { day: '2-digit', month: 'long', year: 'numeric' }) %>
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label style="color: var(--text-muted); font-size: 0.875rem;">Last Login</label>
+                            <p style="font-weight: 600; margin: 0.25rem 0 0 0;">
+                                <%= adminUser.last_login ? formatDateWIB(adminUser.last_login, { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Never' %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Change Password -->
+                <div class="card">
+                    <h3><i class="fas fa-key"></i> Change Password</h3>
+                    <form method="POST" action="/admin/account/change-password" style="margin-top: 1.5rem;">
+                        <div class="form-group">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" name="current_password" class="form-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" name="new_password" class="form-input" required minlength="8">
+                            <p class="form-help">Min. 8 characters</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" name="confirm_password" class="form-input" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Two-Factor Authentication -->
+            <div class="card" style="margin-top: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3 style="margin-bottom: 0.5rem;">
+                            <i class="fas fa-mobile-alt"></i> 
+                            Two-Factor Authentication (2FA)
+                        </h3>
+                        <p style="color: var(--text-secondary); margin: 0;">
+                            Add an extra layer of security to your account
+                        </p>
+                    </div>
+                    <div>
+                        <% if (adminUser.two_fa_enabled) { %>
+                            <span class="badge" style="background: var(--success); color: white; padding: 0.5rem 1rem; border-radius: var(--radius-full);">
+                                <i class="fas fa-check-circle"></i> Enabled
+                            </span>
+                        <% } else { %>
+                            <span class="badge" style="background: var(--border-color); color: var(--text-muted); padding: 0.5rem 1rem; border-radius: var(--radius-full);">
+                                <i class="fas fa-times-circle"></i> Disabled
+                            </span>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <% if (!adminUser.two_fa_enabled) { %>
+                    <!-- Enable 2FA -->
+                    <div id="enable2FASection">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            2FA menggunakan Google Authenticator, Authy, atau aplikasi TOTP lainnya untuk memberikan keamanan tambahan pada akun Anda.
+                        </div>
+                        
+                        <button onclick="setup2FA()" class="btn btn-primary">
+                            <i class="fas fa-shield-alt"></i>
+                            Enable 2FA
+                        </button>
+                    </div>
+                    
+                    <!-- 2FA Setup Modal (Hidden by default) -->
+                    <div id="setup2FAModal" style="display: none; margin-top: 2rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                        <h4>Setup Two-Factor Authentication</h4>
+                        
+                        <div style="margin: 1.5rem 0;">
+                            <p><strong>Step 1:</strong> Scan QR Code dengan authenticator app Anda</p>
+                            <div style="text-align: center; margin: 1rem 0; padding: 1rem; background: white; border-radius: var(--radius-lg);">
+                                <img id="qrCodeImage" src="" alt="QR Code" style="max-width: 200px;">
+                            </div>
+                            
+                            <p style="margin-top: 1rem;"><strong>Step 2:</strong> Atau masukkan kode rahasia ini secara manual:</p>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="text" id="secretKey" class="form-input" readonly style="font-family: monospace; text-align: center;">
+                                <button onclick="copySecret()" class="btn btn-secondary">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 1.5rem 0;">
+                            <p><strong>Step 3:</strong> Masukkan 6 digit kode verifikasi dari app:</p>
+                            <input type="text" id="verifyToken" class="form-input" placeholder="000000" maxlength="6" pattern="[0-9]{6}" style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem; font-family: monospace;">
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="verifyAndEnable2FA()" class="btn btn-success">
+                                <i class="fas fa-check"></i>
+                                Verify & Enable
+                            </button>
+                            <button onclick="cancel2FASetup()" class="btn btn-secondary">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <!-- Disable 2FA -->
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        Two-Factor Authentication is currently <strong>enabled</strong> on your account.
+                    </div>
+                    
+                    <button onclick="disable2FA()" class="btn btn-danger">
+                        <i class="fas fa-shield-alt"></i>
+                        Disable 2FA
+                    </button>
+                <% } %>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        let tempSecret = '';
+        
+        // Setup 2FA
+        async function setup2FA() {
+            try {
+                const response = await fetch('/admin/account/setup-2fa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                // Store secret temporarily
+                tempSecret = data.secret;
+                
+                // Show QR code and secret
+                document.getElementById('qrCodeImage').src = data.qrCode;
+                document.getElementById('secretKey').value = data.secret;
+                
+                // Hide enable button, show setup modal
+                document.getElementById('enable2FASection').style.display = 'none';
+                document.getElementById('setup2FAModal').style.display = 'block';
+                
+            } catch (error) {
+                alert('Error setting up 2FA: ' + error.message);
+            }
+        }
+        
+        // Copy secret to clipboard
+        function copySecret() {
+            const secretField = document.getElementById('secretKey');
+            secretField.select();
+            document.execCommand('copy');
+            alert('Secret key copied to clipboard!');
+        }
+        
+        // Verify and enable 2FA
+        async function verifyAndEnable2FA() {
+            const token = document.getElementById('verifyToken').value;
+            
+            if (!token || token.length !== 6) {
+                alert('Please enter a valid 6-digit code');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/admin/account/enable-2fa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        secret: tempSecret,
+                        token: token
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('2FA enabled successfully! You will need your authenticator app on next login.');
+                    window.location.reload();
+                } else {
+                    alert('Verification failed: ' + (data.error || 'Invalid token'));
+                }
+                
+            } catch (error) {
+                alert('Error enabling 2FA: ' + error.message);
+            }
+        }
+        
+        // Cancel 2FA setup
+        function cancel2FASetup() {
+            document.getElementById('enable2FASection').style.display = 'block';
+            document.getElementById('setup2FAModal').style.display = 'none';
+            tempSecret = '';
+        }
+        
+        // Disable 2FA
+        async function disable2FA() {
+            const password = prompt('Enter your password to disable 2FA:');
+            
+            if (!password) return;
+            
+            try {
+                const response = await fetch('/admin/account/disable-2fa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('2FA has been disabled');
+                    window.location.reload();
+                } else {
+                    alert('Failed to disable 2FA: ' + (data.error || 'Unknown error'));
+                }
+                
+            } catch (error) {
+                alert('Error disabling 2FA: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

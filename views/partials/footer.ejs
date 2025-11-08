@@ -1,0 +1,86 @@
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><%= settings.store_name || 'RSA Store' %></h3>
+                    <p><%= settings.store_description || 'Toko Digital Terpercaya' %></p>
+                    <div class="social-links mt-2">
+                        <% if (settings.store_telegram) { %>
+                            <a href="https://t.me/<%= settings.store_telegram.replace('@', '') %>" target="_blank" class="btn btn-secondary btn-sm">
+                                <i class="fab fa-telegram"></i>
+                            </a>
+                        <% } %>
+                        <% if (settings.store_whatsapp) { %>
+                            <a href="https://wa.me/<%= settings.store_whatsapp %>" target="_blank" class="btn btn-secondary btn-sm">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                        <% } %>
+                        <% if (settings.store_email) { %>
+                            <a href="mailto:<%= settings.store_email %>" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="/"><i class="fas fa-angle-right"></i> Home</a></li>
+                        <li><a href="/shop"><i class="fas fa-angle-right"></i> Shop</a></li>
+                        <li><a href="/blog"><i class="fas fa-angle-right"></i> Blog</a></li>
+                        <li><a href="/recover"><i class="fas fa-angle-right"></i> Invoice Recovery</a></li>
+                        <li><a href="/contact"><i class="fas fa-angle-right"></i> Contact Us</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Information</h3>
+                    <ul class="footer-links">
+                        <li><a href="/page/about-us"><i class="fas fa-angle-right"></i> About Us</a></li>
+                        <li><a href="/page/terms-of-service"><i class="fas fa-angle-right"></i> Terms of Service</a></li>
+                        <li><a href="/page/privacy-policy"><i class="fas fa-angle-right"></i> Privacy Policy</a></li>
+                        <li><a href="/page/refund-policy"><i class="fas fa-angle-right"></i> Refund Policy</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <ul class="footer-links">
+                        <% if (settings.store_email) { %>
+                            <li><i class="fas fa-envelope"></i> <%= settings.store_email %></li>
+                        <% } %>
+                        <% if (settings.store_whatsapp) { %>
+                            <li><i class="fab fa-whatsapp"></i> +<%= settings.store_whatsapp %></li>
+                        <% } %>
+                        <% if (settings.store_telegram) { %>
+                            <li><i class="fab fa-telegram"></i> <%= settings.store_telegram %></li>
+                        <% } %>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; <%= new Date().getFullYear() %> <%= settings.store_name || 'RSA Store' %>. All rights reserved.</p>
+                <p>Powered by <strong>RSA Store Platform</strong> 🚀</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="/js/main.js"></script>
+    
+    <!-- Mobile spacing fix - load on all pages -->
+    <script src="/js/mobile-fix.js?v=<%= Date.now() %>"></script>
+    
+    <!-- Additional Scripts for specific pages -->
+    <% if (typeof additionalJS !== 'undefined' && additionalJS) { %>
+        <% additionalJS.forEach(js => { %>
+            <script src="<%= js %>"></script>
+        <% }); %>
+    <% } %>
+</body>
+</html>

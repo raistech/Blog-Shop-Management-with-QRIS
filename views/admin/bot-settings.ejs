@@ -1,0 +1,418 @@
+<%- include('../partials/admin-header') %>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <h1><i class="fas fa-robot"></i> Bot Settings</h1>
+            <p>Configure WhatsApp and Telegram bot integration</p>
+        </div>
+        
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <% if (success === 'telegram_updated') { %>
+                    Telegram bot settings updated successfully!
+                <% } else if (success === 'whatsapp_updated') { %>
+                    WhatsApp bot settings updated successfully!
+                <% } else if (success === 'whatsapp_disconnected') { %>
+                    WhatsApp bot disconnected successfully!
+                <% } else { %>
+                    Settings updated successfully!
+                <% } %>
+            </div>
+        <% } %>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <% if (error === 'telegram_update_failed') { %>
+                    Failed to update Telegram bot settings. Please try again.
+                <% } else if (error === 'whatsapp_update_failed') { %>
+                    Failed to update WhatsApp bot settings. Please try again.
+                <% } else if (error === 'whatsapp_disconnect_failed') { %>
+                    Failed to disconnect WhatsApp bot. Please try again.
+                <% } else { %>
+                    An error occurred. Please try again.
+                <% } %>
+            </div>
+        <% } %>
+
+        <!-- Telegram Bot Settings -->
+        <div class="card">
+            <h3><i class="fab fa-telegram"></i> Telegram Bot</h3>
+            <p class="form-help" style="margin-bottom: 1.5rem;">
+                <i class="fas fa-info-circle"></i> Telegram bot dengan inline keyboard untuk pengalaman yang lebih interaktif.
+            </p>
+            
+            <form method="POST" action="/admin/bot-settings/telegram">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                
+                <div class="form-group">
+                    <label class="form-label">Bot Token</label>
+                    <input type="text" name="telegram_bot_token" class="form-input" 
+                           value="<%= botSettings.telegram_bot_token || '' %>" 
+                           placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz">
+                    <p class="form-help">
+                        Dapatkan token dari <a href="https://t.me/BotFather" target="_blank" style="color: var(--accent-primary);">@BotFather</a>. 
+                        Kirim <code>/newbot</code> dan ikuti instruksi.
+                    </p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="telegram_bot_enabled" <%= botSettings.telegram_bot_enabled ? 'checked' : '' %>>
+                        <span>Enable Telegram Bot</span>
+                    </label>
+                    <p class="form-help">Aktifkan bot Telegram untuk menerima pesan dari customer.</p>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Telegram Settings
+                </button>
+            </form>
+            
+            <% if (botSettings.telegram_bot_enabled && botSettings.telegram_bot_token) { %>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                    <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-check-circle" style="color: var(--success);"></i> Bot Status: Active</h4>
+                    <p style="margin-bottom: 0.5rem;">Bot sudah berjalan dan siap menerima pesan.</p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted);">
+                        Test bot: <a href="https://t.me/<%= botSettings.telegram_bot_token.split(':')[0] %>" target="_blank" style="color: var(--accent-primary);">Open in Telegram</a>
+                    </p>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- WhatsApp Bot Settings -->
+        <div class="card">
+            <h3><i class="fab fa-whatsapp"></i> WhatsApp Bot</h3>
+            <p class="form-help" style="margin-bottom: 1.5rem;">
+                <i class="fas fa-info-circle"></i> WhatsApp bot menggunakan Baileys untuk integrasi WhatsApp Web.
+            </p>
+            
+            <form method="POST" action="/admin/bot-settings/whatsapp" id="whatsappForm">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="whatsapp_enabled" id="whatsapp_enabled" 
+                               <%= botSettings.whatsapp_enabled ? 'checked' : '' %>
+                               onchange="handleWhatsAppToggle(this)">
+                        <span>Enable WhatsApp Bot</span>
+                    </label>
+                    <p class="form-help">Aktifkan bot WhatsApp untuk menerima pesan dari customer.</p>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save WhatsApp Settings
+                </button>
+            </form>
+            
+            <!-- QR Code Section -->
+            <div id="qrCodeSection" style="margin-top: 1.5rem; display: <%= botSettings.whatsapp_enabled ? 'block' : 'none' %>;">
+                <div style="padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                    <h4 style="margin-bottom: 1rem;"><i class="fas fa-qrcode"></i> WhatsApp QR Code Login</h4>
+                    
+                    <div id="qrStatus">
+                        <div style="text-align: center; padding: 2rem;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--text-muted);"></i>
+                            <p style="margin-top: 1rem; color: var(--text-muted);">Loading status...</p>
+                        </div>
+                    </div>
+                    
+                    <div id="qrCodeDisplay" style="display: none;">
+                        <div style="text-align: center; padding: 1rem; background: white; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                            <img id="qrCodeImage" src="" alt="WhatsApp QR Code" style="max-width: 300px; width: 100%;">
+                        </div>
+                        <ol style="font-size: 0.875rem; color: var(--text-muted); padding-left: 1.5rem;">
+                            <li>Buka WhatsApp di ponsel Anda</li>
+                            <li>Tap <strong>Menu</strong> atau <strong>Settings</strong></li>
+                            <li>Pilih <strong>Linked Devices</strong></li>
+                            <li>Tap <strong>Link a Device</strong></li>
+                            <li>Scan QR code di atas</li>
+                        </ol>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            <i class="fas fa-clock"></i> QR code akan diperbarui setiap 20 detik
+                        </p>
+                    </div>
+                    
+                    <div id="connectedDisplay" style="display: none;">
+                        <div style="padding: 1rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius-md); margin-bottom: 1rem;">
+                            <h4 style="color: var(--success); margin-bottom: 0.5rem;">
+                                <i class="fas fa-check-circle"></i> Connected
+                            </h4>
+                            <p style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+                                Bot WhatsApp berhasil terkoneksi!
+                            </p>
+                            <p style="font-size: 0.875rem; color: var(--text-muted);">
+                                <i class="fas fa-phone"></i> Nomor: <strong id="phoneNumber">-</strong>
+                            </p>
+                        </div>
+                        
+                        <form method="POST" action="/admin/bot-settings/whatsapp/disconnect" style="margin-top: 1rem;">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Yakin ingin disconnect WhatsApp bot?')">
+                                <i class="fas fa-sign-out-alt"></i> Disconnect WhatsApp
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bot Features Info -->
+        <div class="card">
+            <h3><i class="fas fa-info-circle"></i> Bot Features</h3>
+            
+            <div class="grid grid-2">
+                <div>
+                    <h4 style="margin-bottom: 0.5rem;"><i class="fab fa-telegram"></i> Telegram Bot</h4>
+                    <ul style="font-size: 0.875rem; color: var(--text-muted); padding-left: 1.5rem;">
+                        <li>✅ Inline keyboard (buttons interaktif)</li>
+                        <li>✅ Browse katalog produk</li>
+                        <li>✅ Search produk</li>
+                        <li>✅ Cek status pesanan</li>
+                        <li>✅ Link ke checkout page</li>
+                        <li>✅ Support gambar produk</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 style="margin-bottom: 0.5rem;"><i class="fab fa-whatsapp"></i> WhatsApp Bot</h4>
+                    <ul style="font-size: 0.875rem; color: var(--text-muted); padding-left: 1.5rem;">
+                        <li>✅ Menu berbasis teks</li>
+                        <li>✅ Browse katalog produk</li>
+                        <li>✅ Search produk</li>
+                        <li>✅ Cek status pesanan</li>
+                        <li>✅ Link ke checkout page</li>
+                        <li>⚠️ Tidak ada inline button (keterbatasan WhatsApp Web)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--warning-bg); border: 1px solid var(--warning); border-radius: var(--radius-md);">
+                <p style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i> <strong>Catatan Penting:</strong>
+                </p>
+                <ul style="font-size: 0.875rem; color: var(--text-muted); padding-left: 1.5rem; margin: 0;">
+                    <li>Bot akan memproses pesan secara otomatis 24/7</li>
+                    <li>Pastikan server selalu aktif untuk bot berjalan</li>
+                    <li>Gunakan PM2 untuk auto-restart jika bot crash</li>
+                    <li>WhatsApp QR code perlu di-scan ulang jika session expire (biasanya 2-3 minggu)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Test WhatsApp Notification -->
+        <div class="card">
+            <h3><i class="fas fa-vial"></i> Test WhatsApp Notification</h3>
+            <p class="form-help" style="margin-bottom: 1.5rem;">
+                <i class="fas fa-info-circle"></i> Test fitur WhatsApp payment notification dengan dummy order. 
+                Berguna untuk memastikan bot WhatsApp dan notifikasi berfungsi dengan baik.
+            </p>
+            
+            <div id="testSection">
+                <form id="testWhatsAppForm" onsubmit="testWhatsAppNotification(event)">
+                    <div class="form-group">
+                        <label class="form-label">Nomor WhatsApp Test</label>
+                        <input type="tel" id="testWhatsAppNumber" class="form-input" 
+                               placeholder="08123456789 atau 628123456789" required>
+                        <p class="form-help">
+                            Masukkan nomor WhatsApp Anda untuk menerima test notification. 
+                            Format: 08xxx atau 628xxx
+                        </p>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="testBtn">
+                        <i class="fas fa-paper-plane"></i> Send Test Notification
+                    </button>
+                </form>
+                
+                <div id="testResult" style="display: none; margin-top: 1rem;"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// Handle WhatsApp toggle
+function handleWhatsAppToggle(checkbox) {
+    const qrSection = document.getElementById('qrCodeSection');
+    if (checkbox.checked) {
+        qrSection.style.display = 'block';
+        // Start polling for QR code
+        setTimeout(() => checkWhatsAppStatus(), 1000);
+    } else {
+        qrSection.style.display = 'none';
+    }
+}
+
+// Check WhatsApp status and QR code
+let statusCheckInterval = null;
+
+function checkWhatsAppStatus() {
+    fetch('/admin/bot-settings/whatsapp/qr')
+        .then(res => res.json())
+        .then(data => {
+            const qrStatus = document.getElementById('qrStatus');
+            const qrCodeDisplay = document.getElementById('qrCodeDisplay');
+            const connectedDisplay = document.getElementById('connectedDisplay');
+            
+            if (data.status === 'connected') {
+                // Show connected state
+                qrStatus.style.display = 'none';
+                qrCodeDisplay.style.display = 'none';
+                connectedDisplay.style.display = 'block';
+                
+                // Update phone number if available
+                if (data.phone_number) {
+                    document.getElementById('phoneNumber').textContent = data.phone_number;
+                }
+                
+                // Stop polling
+                if (statusCheckInterval) {
+                    clearInterval(statusCheckInterval);
+                    statusCheckInterval = null;
+                }
+            } else if (data.status === 'waiting_qr' && data.qr_code) {
+                // Show QR code
+                qrStatus.style.display = 'none';
+                qrCodeDisplay.style.display = 'block';
+                connectedDisplay.style.display = 'none';
+                
+                document.getElementById('qrCodeImage').src = data.qr_code;
+                
+                // Continue polling every 3 seconds
+                if (!statusCheckInterval) {
+                    statusCheckInterval = setInterval(checkWhatsAppStatus, 3000);
+                }
+            } else {
+                // Show loading/disconnected state
+                qrStatus.style.display = 'block';
+                qrCodeDisplay.style.display = 'none';
+                connectedDisplay.style.display = 'none';
+                
+                qrStatus.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--text-muted);"></i>
+                        <p style="margin-top: 1rem; color: var(--text-muted);">
+                            ${data.status === 'disconnected' ? 'Waiting for connection...' : 'Initializing...'}
+                        </p>
+                    </div>
+                `;
+                
+                // Continue polling every 3 seconds
+                if (!statusCheckInterval) {
+                    statusCheckInterval = setInterval(checkWhatsAppStatus, 3000);
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Error checking WhatsApp status:', err);
+        });
+}
+
+// Start checking status if WhatsApp is enabled
+window.addEventListener('DOMContentLoaded', function() {
+    const whatsappEnabled = document.getElementById('whatsapp_enabled');
+    if (whatsappEnabled && whatsappEnabled.checked) {
+        checkWhatsAppStatus();
+    }
+});
+
+// Clean up interval on page unload
+window.addEventListener('beforeunload', function() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
+});
+
+// Test WhatsApp Notification
+async function testWhatsAppNotification(event) {
+    event.preventDefault();
+    
+    const testBtn = document.getElementById('testBtn');
+    const testResult = document.getElementById('testResult');
+    const phoneNumber = document.getElementById('testWhatsAppNumber').value;
+    
+    // Disable button
+    testBtn.disabled = true;
+    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    
+    // Show loading
+    testResult.style.display = 'block';
+    testResult.innerHTML = `
+        <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md); text-align: center;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: var(--text-muted);"></i>
+            <p style="margin-top: 0.5rem; color: var(--text-muted);">Mengirim test notification...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch('/admin/bot-settings/whatsapp/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '<%= csrfToken %>'
+            },
+            body: JSON.stringify({ phone_number: phoneNumber })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            testResult.innerHTML = `
+                <div style="padding: 1rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius-md);">
+                    <h4 style="color: var(--success); margin-bottom: 0.5rem;">
+                        <i class="fas fa-check-circle"></i> Test Berhasil!
+                    </h4>
+                    <p style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+                        Notifikasi WhatsApp berhasil dikirim ke <strong>${data.formatted_number}</strong>
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0;">
+                        ${data.message || 'Silakan cek WhatsApp Anda untuk melihat test notification.'}
+                    </p>
+                </div>
+            `;
+        } else {
+            testResult.innerHTML = `
+                <div style="padding: 1rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-md);">
+                    <h4 style="color: var(--error); margin-bottom: 0.5rem;">
+                        <i class="fas fa-exclamation-circle"></i> Test Gagal
+                    </h4>
+                    <p style="font-size: 0.875rem; margin: 0;">
+                        ${data.error || 'Gagal mengirim notification. Pastikan bot WhatsApp terkoneksi dan nomor valid.'}
+                    </p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        testResult.innerHTML = `
+            <div style="padding: 1rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-md);">
+                <h4 style="color: var(--error); margin-bottom: 0.5rem;">
+                    <i class="fas fa-exclamation-circle"></i> Error
+                </h4>
+                <p style="font-size: 0.875rem; margin: 0;">
+                    Terjadi kesalahan saat mengirim test notification. Silakan coba lagi.
+                </p>
+            </div>
+        `;
+    } finally {
+        // Re-enable button
+        testBtn.disabled = false;
+        testBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Test Notification';
+    }
+}
+</script>
+
+<style>
+.warning-bg {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+.success-bg {
+    background-color: rgba(76, 175, 80, 0.1);
+}
+</style>
+
+<%- include('../partials/admin-footer') %>

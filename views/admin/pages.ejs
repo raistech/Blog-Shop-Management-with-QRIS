@@ -1,0 +1,132 @@
+<%- include('../partials/admin-header') %>
+
+<div class="admin-layout">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <main class="admin-content">
+        <div class="admin-page-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>
+                        <i class="fas fa-file-alt"></i>
+                        Information Pages
+                    </h1>
+                    <p>Manage static pages (About, Privacy, Terms, etc)</p>
+                </div>
+                <a href="/admin/pages/create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Create Page
+                </a>
+            </div>
+        </div>
+        
+        <% if (pages && pages.length > 0) { %>
+            <div class="grid grid-2" style="gap: 1.5rem;">
+                <% pages.forEach(page => { %>
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <h3 style="margin: 0;"><%= page.title %></h3>
+                            <% if (page.is_active) { %>
+                                <span class="badge badge-success">Active</span>
+                            <% } else { %>
+                                <span class="badge badge-secondary">Hidden</span>
+                            <% } %>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <code style="font-size: 0.875rem; color: var(--text-muted);">/page/<%= page.slug %></code>
+                        </div>
+                        
+                        <div style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.875rem;">
+                            <%= page.content.replace(/<[^>]*>/g, '').substring(0, 150) %>...
+                        </div>
+                        
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">
+                            Last updated: <%= formatDateWIB(page.updated_at, { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="/page/<%= page.slug %>" target="_blank" class="btn btn-sm btn-outline" style="flex: 1;">
+                                <i class="fas fa-external-link-alt"></i>
+                                View
+                            </a>
+                            <a href="/admin/pages/edit/<%= page.id %>" class="btn btn-sm btn-secondary" style="flex: 1;">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </a>
+                            <button onclick="deletePage(<%= page.id %>, '<%= page.title %>')" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="card">
+                <div style="text-align: center; padding: 4rem 2rem;">
+                    <div style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3>No Pages Yet</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                        Create information pages like About Us, Privacy Policy, Terms of Service
+                    </p>
+                    <a href="/admin/pages/create" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Create First Page
+                    </a>
+                </div>
+            </div>
+        <% } %>
+    </main>
+</div>
+
+<style>
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: rgba(74, 222, 128, 0.2);
+    color: var(--success);
+}
+
+.badge-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+</style>
+
+<script>
+async function deletePage(id, title) {
+    if (!confirm(`Are you sure you want to delete "${title}"?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('_csrf', '<%= csrfToken %>');
+        
+        const response = await fetch(`/admin/pages/delete/${id}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete page'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+
+<%- include('../partials/admin-footer') %>

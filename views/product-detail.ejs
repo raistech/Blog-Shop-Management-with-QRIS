@@ -1,0 +1,163 @@
+<% const pageTitle = product.name; %>
+<%- include('partials/header') %>
+
+<div class="container" style="margin-top: 2rem; margin-bottom: 4rem;">
+    <!-- Breadcrumb -->
+    <nav style="margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+            <a href="/" style="color: var(--text-muted);">Home</a>
+            <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+            <a href="/shop" style="color: var(--text-muted);">Shop</a>
+            <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+            <% if (product.category_slug) { %>
+                <a href="/shop?category=<%= product.category_slug %>" style="color: var(--text-muted);"><%= product.category_name %></a>
+                <i class="fas fa-chevron-right" style="font-size: 0.75rem;"></i>
+            <% } %>
+            <span style="color: var(--text-primary);"><%= product.name %></span>
+        </div>
+    </nav>
+    
+    <!-- Product Detail - Simple Layout -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="product-detail-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+            <!-- Left: Image -->
+            <div>
+                <% if (product.image_url) { %>
+                    <img src="<%= product.image_url %>" alt="<%= product.name %>" style="width: 100%; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+                <% } else { %>
+                    <div style="width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: white;">
+                        <i class="fas fa-box"></i>
+                    </div>
+                <% } %>
+                
+                <% if (product.is_digital) { %>
+                    <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); text-align: center; font-size: 0.875rem; color: var(--primary);">
+                        <i class="fas fa-download"></i> Digital Product
+                    </div>
+                <% } %>
+            </div>
+            
+            <!-- Right: Info -->
+            <div>
+                <div style="display: inline-block; padding: 0.25rem 0.75rem; background: rgba(102, 126, 234, 0.1); color: var(--primary); border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 0.75rem;">
+                    <%= product.category_name || 'Uncategorized' %>
+                </div>
+                
+                <h1 style="font-size: 1.5rem; margin-bottom: 1rem;"><%= product.name %></h1>
+                
+                <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Harga</div>
+                        <div style="font-size: 1.75rem; font-weight: 700; color: var(--success);">Rp <%= product.price.toLocaleString('id-ID') %></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Stok</div>
+                        <div style="font-size: 1.125rem; font-weight: 600; color: <%= product.stock <= 5 ? 'var(--warning)' : 'var(--success)' %>;">
+                            <i class="fas fa-box"></i> <%= product.stock %>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-buttons" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <% if (product.stock > 0) { %>
+                        <a href="/checkout/<%= product.id %>" class="btn btn-primary btn-lg" style="flex: 1;">
+                            <i class="fas fa-shopping-cart"></i> Beli Sekarang
+                        </a>
+                    <% } else { %>
+                        <button class="btn btn-secondary btn-lg" disabled style="flex: 1;">
+                            <i class="fas fa-times"></i> Stok Habis
+                        </button>
+                    <% } %>
+                    <a href="<%= settings.store_whatsapp ? 'https://wa.me/' + settings.store_whatsapp : '/contact' %>" target="_blank" class="btn btn-outline btn-lg" style="flex: 0 0 auto; min-width: 60px;">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                    <div style="text-align: center;">
+                        <i class="fas fa-shield-alt" style="font-size: 1.5rem; color: var(--primary); display: block; margin-bottom: 0.5rem;"></i>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">100% Aman</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <i class="fas fa-bolt" style="font-size: 1.5rem; color: var(--primary); display: block; margin-bottom: 0.5rem;"></i>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);"><%= product.is_digital ? 'Instant' : 'Fast' %></span>
+                    </div>
+                    <div style="text-align: center;">
+                        <i class="fas fa-headset" style="font-size: 1.5rem; color: var(--primary); display: block; margin-bottom: 0.5rem;"></i>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">24/7</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Description -->
+    <% if (product.description) { %>
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem;">Deskripsi Produk</h2>
+        <p style="line-height: 1.7; color: var(--text-secondary); white-space: pre-wrap;"><%= product.description %></p>
+    </div>
+    <% } %>
+    
+    <!-- Features -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem;">Yang Anda Dapatkan</h2>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+            <% 
+            let features = [];
+            if (product.features) {
+                try {
+                    features = typeof product.features === 'string' ? JSON.parse(product.features) : product.features;
+                } catch(e) {
+                    features = ['File digital berkualitas tinggi', 'Pembayaran aman dengan QRIS', 'Download link instant via email', 'Customer support 24/7', 'Garansi uang kembali 100%'];
+                }
+            } else {
+                features = ['File digital berkualitas tinggi', 'Pembayaran aman dengan QRIS', 'Download link instant via email', 'Customer support 24/7', 'Garansi uang kembali 100%'];
+            }
+            
+            features.forEach((feature, index) => { %>
+                <li style="padding: 0.75rem 0; display: flex; align-items: start; gap: 0.75rem; <%= index < features.length - 1 ? 'border-bottom: 1px solid var(--border-color);' : '' %>">
+                    <i class="fas fa-check-circle" style="color: var(--success); font-size: 1.125rem; margin-top: 0.125rem;"></i>
+                    <span><%= feature %></span>
+                </li>
+            <% }); %>
+        </ul>
+    </div>
+    
+    <!-- Related Products -->
+    <% if (relatedProducts && relatedProducts.length > 0) { %>
+        <div style="margin-top: 4rem;">
+            <h2 style="text-align: center; margin-bottom: 2rem;">Produk Terkait</h2>
+            
+            <div class="grid grid-4">
+                <% relatedProducts.forEach(relProduct => { %>
+                    <div class="card product-card">
+                        <% if (relProduct.image_url) { %>
+                            <a href="/product/<%= relProduct.slug %>" style="display: block; margin: -2rem -2rem 1.5rem -2rem;">
+                                <img src="<%= relProduct.image_url %>" alt="<%= relProduct.name %>" style="width: 100%; height: 200px; object-fit: cover; border-radius: var(--radius-xl) var(--radius-xl) 0 0;">
+                            </a>
+                        <% } else { %>
+                            <div style="width: calc(100% + 4rem); height: 200px; margin: -2rem -2rem 1.5rem -2rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; border-radius: var(--radius-xl) var(--radius-xl) 0 0;">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        <% } %>
+                        
+                        <div class="product-card-content">
+                            <h4 class="product-name"><%= relProduct.name %></h4>
+                            <div class="product-price">Rp <%= relProduct.price.toLocaleString('id-ID') %></div>
+                            
+                            <div class="product-card-actions">
+                                <a href="/product/<%= relProduct.slug %>" class="btn btn-secondary" style="width: 100%;">
+                                    <i class="fas fa-eye"></i>
+                                    Lihat Detail
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<%- include('partials/footer') %>
