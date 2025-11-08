@@ -8,10 +8,6 @@ Modern e-commerce platform with **WhatsApp & Telegram bot integration**, **dynam
 
 ---
 
-## DEMO
-araii.id 
-- username : demo
-- Password : demo123!
 
 ## ✨ Features
 
